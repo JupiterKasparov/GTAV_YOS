@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CONFIG>
+  <ProjectSession>
+    <PathDelim Value="\"/>
+    <Version Value="10"/>
+    <BuildModes Active="Default"/>
+    <Units Count="10">
+      <Unit0>
+        <Filename Value="ScriptHookVAsiPlugin.lpr"/>
+        <IsPartOfProject Value="True"/>
+        <UsageCount Value="173"/>
+        <Loaded Value="True"/>
+      </Unit0>
+      <Unit1>
+        <Filename Value="scripthookv.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="ScriptHookV"/>
+        <EditorIndex Value="-1"/>
+        <UsageCount Value="173"/>
+      </Unit1>
+      <Unit2>
+        <Filename Value="natives.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="Natives"/>
+        <EditorIndex Value="-1"/>
+        <UsageCount Value="173"/>
+      </Unit2>
+      <Unit3>
+        <Filename Value="yos_script.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="YOS_Script"/>
+        <EditorIndex Value="2"/>
+        <UsageCount Value="173"/>
+        <Loaded Value="True"/>
+      </Unit3>
+      <Unit4>
+        <Filename Value="opcodes.inc"/>
+        <IsPartOfProject Value="True"/>
+        <IsVisibleTab Value="True"/>
+        <EditorIndex Value="4"/>
+        <UsageCount Value="173"/>
+        <Loaded Value="True"/>
+      </Unit4>
+      <Unit5>
+        <Filename Value="opcode_bin_helpers.inc"/>
+        <IsPartOfProject Value="True"/>
+        <EditorIndex Value="5"/>
+        <UsageCount Value="173"/>
+        <Loaded Value="True"/>
+      </Unit5>
+      <Unit6>
+        <Filename Value="yos_screen.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="YOS_Screen"/>
+        <EditorIndex Value="3"/>
+        <UsageCount Value="173"/>
+        <Loaded Value="True"/>
+      </Unit6>
+      <Unit7>
+        <Filename Value="yos_utils.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="YOS_Utils"/>
+        <EditorIndex Value="6"/>
+        <UsageCount Value="131"/>
+        <Loaded Value="True"/>
+      </Unit7>
+      <Unit8>
+        <Filename Value="yos_worldmanager.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="YOS_WorldManager"/>
+        <EditorIndex Value="1"/>
+        <UsageCount Value="91"/>
+        <Loaded Value="True"/>
+      </Unit8>
+      <Unit9>
+        <Filename Value="utils.inc"/>
+        <EditorIndex Value="-1"/>
+        <UsageCount Value="52"/>
+      </Unit9>
+    </Units>
+    <JumpHistory Count="30" HistoryIndex="29">
+      <Position1>
+        <Filename Value="yos_script.pas"/>
+        <Caret Line="13" Column="59"/>
+      </Position1>
+      <Position2>
+        <Filename Value="yos_script.pas"/>
+        <Caret Line="549" Column="43" TopLine="521"/>
+      </Position2>
+      <Position3>
+        <Filename Value="yos_script.pas"/>
+        <Caret Line="550" Column="43" TopLine="521"/>
+      </Position3>
+      <Position4>
+        <Filename Value="opcodes.inc"/>
+        <Caret Line="2339" Column="55" TopLine="2311"/>
+      </Position4>
+      <Position5>
+        <Filename Value="yos_script.pas"/>
+        <Caret Line="64" Column="112" TopLine="37"/>
+      </Position5>
+      <Position6>
+        <Filename Value="yos_script.pas"/>
+        <Caret Line="17" Column="203"/>
+      </Position6>
+      <Position7>
+        <Filename Value="opcodes.inc"/>
+      </Position7>
+      <Position8>
+        <Filename Value="opcodes.inc"/>
+        <Caret Line="1324" Column="26" TopLine="1289"/>
+      </Position8>
+      <Position9>
+        <Filename Value="opcodes.inc"/>
+        <Caret Line="1337" Column="28" TopLine="1302"/>
+      </Position9>
+      <Position10>
+        <Filename Value="opcodes.inc"/>
+        <Caret Line="2094" Column="17" TopLine="2067"/>
+      </Position10>
+      <Position11>
+        <Filename Value="opcodes.inc"/>
+        <Caret Line="2092" Column="44" TopLine="2077"/>
+      </Position11>
+      <Position12>
+        <Filename Value="opcodes.inc"/>
+      </Position12>
+      <Position13>
+        <Filename Value="opcodes.inc"/>
+        <Caret Line="1081" Column="20" TopLine="1046"/>
+      </Position13>
+      <Position14>
+        <Filename Value="opcodes.inc"/>
+        <Caret Line="1735" Column="42" TopLine="1701"/>
+      </Position14>
+      <Position15>
+        <Filename Value="yos_script.pas"/>
+      </Position15>
+      <Position16>
+        <Filename Value="yos_script.pas"/>
+        <Caret Line="550" Column="49" TopLine="516"/>
+      </Position16>
+      <Position17>
+        <Filename Value="yos_script.pas"/>
+        <Caret Line="551" Column="49" TopLine="517"/>
+      </Position17>
+      <Position18>
+        <Filename Value="opcodes.inc"/>
+      </Position18>
+      <Position19>
+        <Filename Value="opcodes.inc"/>
+        <Caret Line="2362" Column="36" TopLine="2327"/>
+      </Position19>
+      <Position20>
+        <Filename Value="opcodes.inc"/>
+        <Caret Line="2381" Column="40" TopLine="2346"/>
+      </Position20>
+      <Position21>
+        <Filename Value="yos_script.pas"/>
+      </Position21>
+      <Position22>
+        <Filename Value="yos_script.pas"/>
+        <Caret Line="211" Column="9" TopLine="184"/>
+      </Position22>
+      <Position23>
+        <Filename Value="opcodes.inc"/>
+        <Caret Line="2634" Column="19" TopLine="2622"/>
+      </Position23>
+      <Position24>
+        <Filename Value="opcodes.inc"/>
+      </Position24>
+      <Position25>
+        <Filename Value="yos_worldmanager.pas"/>
+      </Position25>
+      <Position26>
+        <Filename Value="yos_script.pas"/>
+      </Position26>
+      <Position27>
+        <Filename Value="yos_script.pas"/>
+        <Caret Line="204" Column="28" TopLine="171"/>
+      </Position27>
+      <Position28>
+        <Filename Value="yos_script.pas"/>
+        <Caret Line="918" Column="39" TopLine="898"/>
+      </Position28>
+      <Position29>
+        <Filename Value="yos_script.pas"/>
+      </Position29>
+      <Position30>
+        <Filename Value="opcodes.inc"/>
+        <Caret Line="600" Column="87" TopLine="590"/>
+      </Position30>
+    </JumpHistory>
+  </ProjectSession>
+</CONFIG>
