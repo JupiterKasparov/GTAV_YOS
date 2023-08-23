@@ -1126,8 +1126,8 @@ begin
           begin
             thread.script.globalArrays[i].Used := true;
             GTA5_SetArrayLength(thread.script.globalArrays[i].Value, 2);
-            GTA5_SetArrayItem(thread.script.globalArrays[i].Value, 0, 2); // YOS major version
-            GTA5_SetArrayItem(thread.script.globalArrays[i].Value, 1, 0); // YOS minor version
+            GTA5_SetArrayItem(thread.script.globalArrays[i].Value, 0, SCRIPT_MAJOR_VERSION); // YOS major version
+            GTA5_SetArrayItem(thread.script.globalArrays[i].Value, 1, SCRIPT_MINOR_VERSION); // YOS minor version
             thread.SetVarData(vloc, svtArray, vid, PUINT32(@i)^);
             break;
           end;

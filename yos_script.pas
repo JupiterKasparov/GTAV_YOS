@@ -7,6 +7,10 @@ interface
 uses
   ScriptHookV, Natives, Windows, ctypes, SysUtils, Classes, INIFiles, YOS_Screen, YOS_WorldManager, YOS_Utils;
 
+const
+  SCRIPT_MAJOR_VERSION = 2;
+  SCRIPT_MINOR_VERSION = 0;
+
 type
   // Forward declarations
   TMissionThread = class;
@@ -76,6 +80,12 @@ type
     Model, Color1, Color2, ColorCombo, ModKit, WheelType, WindowTint, Livery: cint;
     TireSmokeColor: array [0..2] of cint;
     VehicleMods: array [0..49] of cint;
+    ModColor1: array [0..2] of cint;
+    ModColor2: array [0..1] of cint;
+    ExtraColor: array [0..1] of cint;
+    CustomPriColor: array [0..2] of cint;
+    CustomSecColor:  array [0..2] of cint;
+    BulletProofTires: boolean;
   end;
   TStoredPlayerData = record
     X, Y, Z, A: cfloat;
@@ -194,19 +204,19 @@ type
     procedure UpdateBlip(blipRecord: TBlipVar);
     procedure CreateManagedPickup(var pickupRecord: TPickupVar);
     procedure ManageObjects;
-    procedure RestoreManagedGameObject(var objectRecord: TSavedObjectVar; stream: TStream); // Used, when the script data is loaded from a savegame file
-    procedure RestoreForbiddenCube(var forbiddenCubeRecord: TForbiddenCubeVar; stream: TStream); // Used, when the script data is loaded from a savegame file
-    procedure RestoreCarGenerator(var carGeneratorRecord: TCarGeneratorVar; stream: TStream); // Used, when the script data is loaded from a savegame file
+    procedure RestoreManagedGameObject(var objectRecord: TSavedObjectVar; stream: TStream; savMajorVer, savMinorVer: integer); // Used, when the script data is loaded from a savegame file
+    procedure RestoreForbiddenCube(var forbiddenCubeRecord: TForbiddenCubeVar; stream: TStream; savMajorVer, savMinorVer: integer); // Used, when the script data is loaded from a savegame file
+    procedure RestoreCarGenerator(var carGeneratorRecord: TCarGeneratorVar; stream: TStream; savMajorVer, savMinorVer: integer); // Used, when the script data is loaded from a savegame file
     procedure StoreManagedObject(objectRecord: TSavedObjectVar; stream: TStream); // Used, when the script data is saved into a savegame file
     procedure StoreForbiddenCube(forbiddenCubeRecord: TForbiddenCubeVar; stream: TStream); // Used, when the script data is saved into a savegame file
     procedure StoreCarGenerator(carGeneratorRecord: TCarGeneratorVar; stream: TStream); // Used, when the script data is saved into a savegame file
     procedure StorePlayer(var data: TStoredPlayerData; actor: Ped);
     procedure RestorePlayer(data: TStoredPlayerData; actor: Ped); // NOTE: this applies the stored properties onto the specified ped
-    procedure LoadPlayerData(var data: TStoredPlayerData; stream: TStream); // Used, when the script data is loaded from a savegame file
+    procedure LoadPlayerData(var data: TStoredPlayerData; stream: TStream; savMajorVer, savMinorVer: integer); // Used, when the script data is loaded from a savegame file
     procedure SavePlayerData(data: TStoredPlayerData; stream: TStream); // Used, when the script data is saved into a savegame file
     procedure StoreVehicle(var data: TStoredVehicleData; veh: Vehicle);
     function RestoreVehicle(data: TVehiclePersistenceData): Vehicle; // NOTE: this spawns a vehicle in the gameworld
-    procedure LoadVehicleData(var data: TStoredVehicleData; stream: TStream); // Used, when the script data is loaded from a savegame file
+    procedure LoadVehicleData(var data: TStoredVehicleData; stream: TStream; savMajorVer, savMinorVer: integer); // Used, when the script data is loaded from a savegame file
     procedure SaveVehicleData(data: TStoredVehicleData; stream: TStream); // Used, when the script data is saved into a savegame file
   public
     // Public functions
@@ -661,7 +671,7 @@ begin
   lastPickupCheckTime := currentTimeMs;
 end;
 
-procedure TMissionScript.RestoreManagedGameObject(var objectRecord: TSavedObjectVar; stream: TStream);
+procedure TMissionScript.RestoreManagedGameObject(var objectRecord: TSavedObjectVar; stream: TStream; savMajorVer, savMinorVer: integer);
 var
   model: Hash;
   u32: UINT32;
@@ -703,7 +713,7 @@ begin
     end;
 end;
 
-procedure TMissionScript.RestoreForbiddenCube(var forbiddenCubeRecord: TForbiddenCubeVar; stream: TStream);
+procedure TMissionScript.RestoreForbiddenCube(var forbiddenCubeRecord: TForbiddenCubeVar; stream: TStream; savMajorVer, savMinorVer: integer);
 var
   u32: UINT32;
 begin
@@ -730,7 +740,7 @@ begin
     end;
 end;
 
-procedure TMissionScript.RestoreCarGenerator(var carGeneratorRecord: TCarGeneratorVar; stream: TStream);
+procedure TMissionScript.RestoreCarGenerator(var carGeneratorRecord: TCarGeneratorVar; stream: TStream; savMajorVer, savMinorVer: integer);
 var
   u32: UINT32;
 begin
@@ -979,7 +989,7 @@ begin
     end;
 end;
 
-procedure TMissionScript.LoadPlayerData(var data: TStoredPlayerData; stream: TStream);
+procedure TMissionScript.LoadPlayerData(var data: TStoredPlayerData; stream: TStream; savMajorVer, savMinorVer: integer);
 var
   u32: UINT32;
   i, j: integer;
@@ -1023,7 +1033,7 @@ begin
   // Personal vehicle
   data.IsDriving := (stream.ReadByte <> 0);
   if data.IsDriving then
-    LoadVehicleData(data.VehicleData, stream);
+    LoadVehicleData(data.VehicleData, stream, savMajorVer, savMinorVer);
 end;
 
 procedure TMissionScript.SavePlayerData(data: TStoredPlayerData; stream: TStream);
@@ -1075,17 +1085,42 @@ end;
 procedure TMissionScript.StoreVehicle(var data: TStoredVehicleData; veh: Vehicle);
 var
   i: integer;
+  ci1, ci2, ci3: cint;
 begin
   data.Model := GET_ENTITY_MODEL(veh);
-  GET_VEHICLE_COLOURS(veh, @data.Color1, @data.Color2);
+  GET_VEHICLE_COLOURS(veh, @ci1, @ci2);
+  data.Color1 := ci1;
+  data.Color2 := ci2;
   data.ColorCombo := GET_VEHICLE_COLOUR_COMBINATION(veh);
   data.ModKit := GET_VEHICLE_MOD_KIT(veh);
   data.WheelType := GET_VEHICLE_WHEEL_TYPE(veh);
   data.WindowTint := GET_VEHICLE_WINDOW_TINT(veh);
   data.Livery := GET_VEHICLE_LIVERY(veh);
-  GET_VEHICLE_TYRE_SMOKE_COLOR(veh, @data.TireSmokeColor[0], @data.TireSmokeColor[1], @data.TireSmokeColor[2]);
+  GET_VEHICLE_TYRE_SMOKE_COLOR(veh, @ci1, @ci2, @ci3);
+  data.TireSmokeColor[0] := ci1;
+  data.TireSmokeColor[1] := ci2;
+  data.TireSmokeColor[2] := ci3;
   for i := 0 to 49 do
       data.VehicleMods[i] := GET_VEHICLE_MOD(veh, cint(i));
+  GET_VEHICLE_MOD_COLOR_1(veh, @ci1, @ci2, @ci3);
+  data.ModColor1[0] := ci1;
+  data.ModColor1[1] := ci2;
+  data.ModColor1[2] := ci3;
+  GET_VEHICLE_MOD_COLOR_2(veh, @ci1, @ci2);
+  data.ModColor2[0] := ci1;
+  data.ModColor2[1] := ci2;
+  GET_VEHICLE_EXTRA_COLOURS(veh, @ci1, @ci2);
+  data.ExtraColor[0] := ci1;
+  data.ExtraColor[1] := ci2;
+  GET_VEHICLE_CUSTOM_PRIMARY_COLOUR(veh, @ci1, @ci2, @ci3);
+  data.CustomPriColor[0] := ci1;
+  data.CustomPriColor[1] := ci2;
+  data.CustomPriColor[2] := ci3;
+  GET_VEHICLE_CUSTOM_SECONDARY_COLOUR(veh, @ci1, @ci2, @ci3);
+  data.CustomSecColor[0] := ci1;
+  data.CustomSecColor[1] := ci2;
+  data.CustomSecColor[2] := ci3;
+  data.BulletProofTires := (GET_VEHICLE_TYRES_CAN_BURST(veh) <> BOOL(0));
 end;
 
 function TMissionScript.RestoreVehicle(data: TVehiclePersistenceData): Vehicle;
@@ -1108,10 +1143,19 @@ begin
   SET_VEHICLE_TYRE_SMOKE_COLOR(Result, data.VehicleData.TireSmokeColor[0], data.VehicleData.TireSmokeColor[1], data.VehicleData.TireSmokeColor[2]);
   for i := 0 to 49 do
       SET_VEHICLE_MOD(Result, cint(i), data.VehicleData.VehicleMods[i], BOOL(0));
+  SET_VEHICLE_MOD_COLOR_1(Result, data.VehicleData.ModColor1[0], data.VehicleData.ModColor1[1], data.VehicleData.ModColor1[2]);
+  SET_VEHICLE_MOD_COLOR_2(Result, data.VehicleData.ModColor2[0], data.VehicleData.ModColor2[1]);
+  SET_VEHICLE_EXTRA_COLOURS(Result, data.VehicleData.ExtraColor[0], data.VehicleData.ExtraColor[1]);
+  SET_VEHICLE_CUSTOM_PRIMARY_COLOUR(Result, data.VehicleData.CustomPriColor[0], data.VehicleData.CustomPriColor[1], data.VehicleData.CustomPriColor[2]);
+  SET_VEHICLE_CUSTOM_SECONDARY_COLOUR(Result, data.VehicleData.CustomSecColor[0], data.VehicleData.CustomSecColor[1], data.VehicleData.CustomSecColor[2]);
+  if data.VehicleData.BulletProofTires then
+    SET_VEHICLE_TYRES_CAN_BURST(Result, BOOL(0))
+  else
+    SET_VEHICLE_TYRES_CAN_BURST(Result, BOOL(1));
   SET_MODEL_AS_NO_LONGER_NEEDED(data.VehicleData.Model);
 end;
 
-procedure TMissionScript.LoadVehicleData(var data: TStoredVehicleData; stream: TStream);
+procedure TMissionScript.LoadVehicleData(var data: TStoredVehicleData; stream: TStream; savMajorVer, savMinorVer: integer);
 var
   i: integer;
 begin
@@ -1127,6 +1171,17 @@ begin
       data.TireSmokeColor[i] := stream.ReadDWord;
   for i := 0 to 49 do
       data.VehicleMods[i] := stream.ReadDWord;
+  for i := 0 to 2 do
+      data.ModColor1[i] := stream.ReadDWord;
+  for i := 0 to 1 do
+      data.ModColor2[i] := stream.ReadDWord;
+  for i := 0 to 1 do
+      data.ExtraColor[i] := stream.ReadDWord;
+  for i := 0 to 2 do
+      data.CustomPriColor[i] := stream.ReadDWord;
+  for i := 0 to 2 do
+      data.CustomSecColor[i] := stream.ReadDWord;
+  data.BulletProofTires := (stream.ReadByte <> 0);
 end;
 
 procedure TMissionScript.SaveVehicleData(data: TStoredVehicleData; stream: TStream); // Used, when the script data is saved into a savegame file
@@ -1145,6 +1200,20 @@ begin
       stream.WriteDWord(data.TireSmokeColor[i]);
   for i := 0 to 49 do
       stream.WriteDWord(data.VehicleMods[i]);
+  for i := 0 to 2 do
+      stream.WriteDWord(data.ModColor1[i]);
+  for i := 0 to 1 do
+      stream.WriteDWord(data.ModColor2[i]);
+  for i := 0 to 1 do
+      stream.WriteDWord(data.ExtraColor[i]);
+  for i := 0 to 2 do
+      stream.WriteDWord(data.CustomPriColor[i]);
+  for i := 0 to 2 do
+      stream.WriteDWord(data.CustomSecColor[i]);
+  if data.BulletProofTires then
+    stream.WriteByte(1)
+  else
+    stream.WriteByte(0);
 end;
 
 constructor TMissionScript.Create(scriptfile: string);
@@ -1239,7 +1308,7 @@ begin
 
     // **** THREADS **** //
     for i := 0 to High(threads) do
-        threads[i] := TMissionThread.Create(Self, stream, v_major, v_minor);
+        threads[i] := TMissionThread.Create(self, stream, v_major, v_minor);
 
     // **** GLOBAL VARS **** //
     for i := 0 to High(globalVars) do
@@ -1352,19 +1421,19 @@ begin
         begin
           globalSavedObjects[i].Used := (stream.ReadByte <> 0);
           if globalSavedObjects[i].Used then
-            RestoreManagedGameObject(globalSavedObjects[i], stream);
+            RestoreManagedGameObject(globalSavedObjects[i], stream, v_major, v_minor);
         end;
     for i := 0 to High(globalForbiddenCubes) do
         begin
           globalForbiddenCubes[i].Used := (stream.ReadByte <> 0);
           if globalForbiddenCubes[i].Used then
-            RestoreForbiddenCube(globalForbiddenCubes[i], stream);
+            RestoreForbiddenCube(globalForbiddenCubes[i], stream, v_major, v_minor);
         end;
     for i := 0 to High(globalCarGenerators) do
         begin
           globalCarGenerators[i].Used := (stream.ReadByte <> 0);
           if globalCarGenerators[i].Used then
-            RestoreCarGenerator(globalCarGenerators[i], stream);
+            RestoreCarGenerator(globalCarGenerators[i], stream, v_major, v_minor);
         end;
 
     // **** WORLD PERSISTENCE **** //
@@ -1436,7 +1505,7 @@ begin
 
     // **** PLAYER PERSISTENCE **** //
     ZeroMemory(@pdata, sizeof(TStoredPlayerData));
-    LoadPlayerData(pdata, stream);
+    LoadPlayerData(pdata, stream, v_major, v_minor);
     RestorePlayer(pdata, GET_PLAYER_PED(GET_PLAYER_INDEX));
     SET_MAX_WANTED_LEVEL(stream.ReadDWord);
 
@@ -1445,7 +1514,7 @@ begin
         begin
           storedPlayerData[i].Used := (stream.ReadByte <> 0);
           if storedPlayerData[i].Used then
-            LoadPlayerData(storedPlayerData[i].Data, stream);
+            LoadPlayerData(storedPlayerData[i].Data, stream, v_major, v_minor);
         end;
 
     // **** GARAGE PERSISTENCE (Stored Cars) **** //
@@ -1460,7 +1529,7 @@ begin
           storedVehicleData[i].Z := pcfloat(@u32)^;
           u32 := stream.ReadDWord;
           storedVehicleData[i].A := pcfloat(@u32)^;
-          LoadVehicleData(storedVehicleData[i].VehicleData, stream);
+          LoadVehicleData(storedVehicleData[i].VehicleData, stream, v_major, v_minor);
         end;
 
     // **** STATISTICS **** //
@@ -1498,8 +1567,8 @@ begin
   stream := TMemoryStream.Create;
   try
     // **** HEADER **** //
-    stream.WriteDWord(2); // Major version
-    stream.WriteDWord(0); // Minor version
+    stream.WriteDWord(SCRIPT_MAJOR_VERSION); // Major version
+    stream.WriteDWord(SCRIPT_MINOR_VERSION); // Minor version
     if isOnMission then // Actually, it's discouraged to save while on a mission, but we must be prepared in advance...
       stream.WriteByte(1)
     else
