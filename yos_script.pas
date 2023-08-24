@@ -679,93 +679,78 @@ var
   u32: UINT32;
   x, y, z, xa, ya, za: cfloat;
 begin
-  objectRecord.Used := (stream.ReadByte <> 0);
-  if objectRecord.Used then
-    begin
-      model := stream.ReadDWord;
-      u32 := stream.ReadDWord;
-      x := pcfloat(@u32)^;
-      u32 := stream.ReadDWord;
-      y := pcfloat(@u32)^;
-      u32 := stream.ReadDWord;
-      z := pcfloat(@u32)^;
-      u32 := stream.ReadDWord;
-      xa := pcfloat(@u32)^;
-      u32 := stream.ReadDWord;
-      ya := pcfloat(@u32)^;
-      u32 := stream.ReadDWord;
-      za := pcfloat(@u32)^;
+  model := stream.ReadDWord;
+  u32 := stream.ReadDWord;
+  x := pcfloat(@u32)^;
+  u32 := stream.ReadDWord;
+  y := pcfloat(@u32)^;
+  u32 := stream.ReadDWord;
+  z := pcfloat(@u32)^;
+  u32 := stream.ReadDWord;
+  xa := pcfloat(@u32)^;
+  u32 := stream.ReadDWord;
+  ya := pcfloat(@u32)^;
+  u32 := stream.ReadDWord;
+  za := pcfloat(@u32)^;
 
-      // Spawn object
-      if (model <> 0) then // Only try to load objects, that were valid upon being saved....
-        begin
-          REQUEST_MODEL(model);
-          while (HAS_MODEL_LOADED(model) = BOOL(0)) do
-                begin
-                  GameScreen.DrawLoadingScreen;
-                  ScriptHookVWait(0);
-                end;
-          objectRecord._handle := CREATE_OBJECT(model, x, y, z, BOOL(0), BOOL(1), BOOL(0));
-          SET_ENTITY_ROTATION(objectRecord._handle, xa, ya, za, 1, BOOL(1));
-          //SET_ENTITY_COORDS(objectRecord._handle, x, y, z, BOOL(0), BOOL(0), BOOl(0), BOOL(0));
-          SET_MODEL_AS_NO_LONGER_NEEDED(model);
-        end
-      else
-        objectRecord._handle := 0;
-    end;
+  // Spawn object
+  if (model <> 0) then // Only try to load objects, that were valid upon being saved....
+    begin
+      REQUEST_MODEL(model);
+      while (HAS_MODEL_LOADED(model) = BOOL(0)) do
+            begin
+              GameScreen.DrawLoadingScreen;
+              ScriptHookVWait(0);
+            end;
+      objectRecord._handle := CREATE_OBJECT(model, x, y, z, BOOL(0), BOOL(1), BOOL(0));
+      SET_ENTITY_ROTATION(objectRecord._handle, xa, ya, za, 1, BOOL(1));
+      SET_MODEL_AS_NO_LONGER_NEEDED(model);
+    end
+  else
+    objectRecord._handle := 0;
 end;
 
 procedure TMissionScript.RestoreForbiddenCube(var forbiddenCubeRecord: TForbiddenCubeVar; stream: TStream; savMajorVer, savMinorVer: integer);
 var
   u32: UINT32;
 begin
-  forbiddenCubeRecord.Used := (stream.ReadByte <> 0);
-  if forbiddenCubeRecord.Used then
-    begin
-      forbiddenCubeRecord.IsCarCube := (stream.ReadByte <> 0);
-      u32 := stream.ReadDWord;
-      forbiddenCubeRecord.X1 := pcfloat(@u32)^;
-      u32 := stream.ReadDWord;
-      forbiddenCubeRecord.Y1 := pcfloat(@u32)^;
-      u32 := stream.ReadDWord;
-      forbiddenCubeRecord.Z1 := pcfloat(@u32)^;
-      u32 := stream.ReadDWord;
-      forbiddenCubeRecord.X2 := pcfloat(@u32)^;
-      u32 := stream.ReadDWord;
-      forbiddenCubeRecord.Y2 := pcfloat(@u32)^;
-      u32 := stream.ReadDWord;
-      forbiddenCubeRecord.Z2 := pcfloat(@u32)^;
-      if forbiddenCubeRecord.IsCarCube then
-        SET_ROADS_IN_AREA(forbiddenCubeRecord.X1, forbiddenCubeRecord.Y1, forbiddenCubeRecord.Z1, forbiddenCubeRecord.X2, forbiddenCubeRecord.Y2, forbiddenCubeRecord.Z2, BOOL(0), BOOL(1))
-      else
-        SET_PED_PATHS_IN_AREA(forbiddenCubeRecord.X1, forbiddenCubeRecord.Y1, forbiddenCubeRecord.Z1, forbiddenCubeRecord.X2, forbiddenCubeRecord.Y2, forbiddenCubeRecord.Z2, BOOL(0));
-    end;
+  forbiddenCubeRecord.IsCarCube := (stream.ReadByte <> 0);
+  u32 := stream.ReadDWord;
+  forbiddenCubeRecord.X1 := pcfloat(@u32)^;
+  u32 := stream.ReadDWord;
+  forbiddenCubeRecord.Y1 := pcfloat(@u32)^;
+  u32 := stream.ReadDWord;
+  forbiddenCubeRecord.Z1 := pcfloat(@u32)^;
+  u32 := stream.ReadDWord;
+  forbiddenCubeRecord.X2 := pcfloat(@u32)^;
+  u32 := stream.ReadDWord;
+  forbiddenCubeRecord.Y2 := pcfloat(@u32)^;
+  u32 := stream.ReadDWord;
+  forbiddenCubeRecord.Z2 := pcfloat(@u32)^;
+  if forbiddenCubeRecord.IsCarCube then
+    SET_ROADS_IN_AREA(forbiddenCubeRecord.X1, forbiddenCubeRecord.Y1, forbiddenCubeRecord.Z1, forbiddenCubeRecord.X2, forbiddenCubeRecord.Y2, forbiddenCubeRecord.Z2, BOOL(0), BOOL(1))
+  else
+    SET_PED_PATHS_IN_AREA(forbiddenCubeRecord.X1, forbiddenCubeRecord.Y1, forbiddenCubeRecord.Z1, forbiddenCubeRecord.X2, forbiddenCubeRecord.Y2, forbiddenCubeRecord.Z2, BOOL(0));
 end;
 
 procedure TMissionScript.RestoreCarGenerator(var carGeneratorRecord: TCarGeneratorVar; stream: TStream; savMajorVer, savMinorVer: integer);
 var
   u32: UINT32;
 begin
-  carGeneratorRecord.Used := (stream.ReadByte <> 0);
-  if carGeneratorRecord.Used then
-    begin
-      carGeneratorRecord.IsActive := (stream.ReadByte <> 0);
-      carGeneratorRecord.Model := stream.ReadDWord;
-      u32 := stream.ReadDWord;
-      carGeneratorRecord.X := pcfloat(@u32)^;
-      u32 := stream.ReadDWord;
-      carGeneratorRecord.Y := pcfloat(@u32)^;
-      u32 := stream.ReadDWord;
-      carGeneratorRecord.Z := pcfloat(@u32)^;
-      u32 := stream.ReadDWord;
-      carGeneratorRecord.A := pcfloat(@u32)^;
-      if carGeneratorRecord.IsActive then
-        carGeneratorRecord._handle := CREATE_SCRIPT_VEHICLE_GENERATOR(carGeneratorRecord.X, carGeneratorRecord.Y, carGeneratorRecord.Z, carGeneratorRecord.A, 5.0, 3.0, carGeneratorRecord.Model, -1, -1, -1, -1, BOOL(1), BOOL(0), BOOL(0), BOOL(0), BOOL(1), -1)
-      else
-        carGeneratorRecord._handle := 0;
-    end
+  carGeneratorRecord.IsActive := (stream.ReadByte <> 0);
+  carGeneratorRecord.Model := stream.ReadDWord;
+  u32 := stream.ReadDWord;
+  carGeneratorRecord.X := pcfloat(@u32)^;
+  u32 := stream.ReadDWord;
+  carGeneratorRecord.Y := pcfloat(@u32)^;
+  u32 := stream.ReadDWord;
+  carGeneratorRecord.Z := pcfloat(@u32)^;
+  u32 := stream.ReadDWord;
+  carGeneratorRecord.A := pcfloat(@u32)^;
+  if carGeneratorRecord.IsActive then
+    carGeneratorRecord._handle := CREATE_SCRIPT_VEHICLE_GENERATOR(carGeneratorRecord.X, carGeneratorRecord.Y, carGeneratorRecord.Z, carGeneratorRecord.A, 5.0, 3.0, carGeneratorRecord.Model, -1, -1, -1, -1, BOOL(1), BOOL(0), BOOL(0), BOOL(0), BOOL(1), -1)
   else
-    stream.WriteByte(0);
+    carGeneratorRecord._handle := 0;
 end;
 
 procedure TMissionScript.StoreManagedObject(objectRecord: TSavedObjectVar; stream: TStream);
@@ -773,90 +758,72 @@ var
   pos: Vector3;
   cf: cfloat;
 begin
-  if objectRecord.Used then
+  if (objectRecord._handle <> 0) and (GET_ENTITY_TYPE(objectRecord._handle) = 3) then // Only try to write valid properties for actually valid objects
     begin
-      stream.WriteByte(1);
-      if (objectRecord._handle <> 0) and (GET_ENTITY_TYPE(objectRecord._handle) = 3) then // Only try to write valid properties for actually valid objects
-        begin
-          stream.WriteDWord(GET_ENTITY_MODEL(objectRecord._handle));
-          pos := GET_ENTITY_COORDS(objectRecord._handle, BOOL(0));
-          stream.WriteDWord(PUINT32(@pos.x)^);
-          stream.WriteDWord(PUINT32(@pos.y)^);
-          stream.WriteDWord(PUINT32(@pos.z)^);
-          cf := GET_ENTITY_PITCH(objectRecord._handle);
-          stream.WriteDWord(PUINT32(@cf)^);
-          cf := GET_ENTITY_ROLL(objectRecord._handle);
-          stream.WriteDWord(PUINT32(@cf)^);
-          cf := GET_ENTITY_HEADING(objectRecord._handle);
-          stream.WriteDWord(PUINT32(@cf)^);
-        end
-      else
-        begin
-          // Dummy data for invalid, but still referenced objects. All fileds, even the floats, are 4 byte DWORDs. We fill the whole record with zeroes...
-          stream.WriteDWord(0); // Model
-          stream.WriteDWord(0); // X
-          stream.WriteDWord(0); // Y
-          stream.WriteDWord(0); // Z
-          stream.WriteDWord(0); // XA
-          stream.WriteDWord(0); // YA
-          stream.WriteDWord(0); // ZA
-        end;
+      stream.WriteDWord(GET_ENTITY_MODEL(objectRecord._handle));
+      pos := GET_ENTITY_COORDS(objectRecord._handle, BOOL(0));
+      stream.WriteDWord(PUINT32(@pos.x)^);
+      stream.WriteDWord(PUINT32(@pos.y)^);
+      stream.WriteDWord(PUINT32(@pos.z)^);
+      cf := GET_ENTITY_PITCH(objectRecord._handle);
+      stream.WriteDWord(PUINT32(@cf)^);
+      cf := GET_ENTITY_ROLL(objectRecord._handle);
+      stream.WriteDWord(PUINT32(@cf)^);
+      cf := GET_ENTITY_HEADING(objectRecord._handle);
+      stream.WriteDWord(PUINT32(@cf)^);
     end
   else
-    stream.WriteByte(0);
+    begin
+      // Dummy data for invalid, but still referenced objects. All fileds, even the floats, are 4 byte DWORDs. We fill the whole record with zeroes...
+      stream.WriteDWord(0); // Model
+      stream.WriteDWord(0); // X
+      stream.WriteDWord(0); // Y
+      stream.WriteDWord(0); // Z
+      stream.WriteDWord(0); // XA
+      stream.WriteDWord(0); // YA
+      stream.WriteDWord(0); // ZA
+    end;
 end;
 
 procedure TMissionScript.StoreForbiddenCube(forbiddenCubeRecord: TForbiddenCubeVar; stream: TStream);
 var
   cf: cfloat;
 begin
-  if forbiddenCubeRecord.Used then
-    begin
-      stream.WriteByte(1);
-      if forbiddenCubeRecord.IsCarCube then
-        stream.WriteByte(1)
-      else
-        stream.WriteByte(1);
-      cf := forbiddenCubeRecord.X1;
-      stream.WriteDWord(PUINT32(@cf)^);
-      cf := forbiddenCubeRecord.Y1;
-      stream.WriteDWord(PUINT32(@cf)^);
-      cf := forbiddenCubeRecord.Z1;
-      stream.WriteDWord(PUINT32(@cf)^);
-      cf := forbiddenCubeRecord.X2;
-      stream.WriteDWord(PUINT32(@cf)^);
-      cf := forbiddenCubeRecord.Y2;
-      stream.WriteDWord(PUINT32(@cf)^);
-      cf := forbiddenCubeRecord.Z2;
-      stream.WriteDWord(PUINT32(@cf)^);
-    end
+  if forbiddenCubeRecord.IsCarCube then
+    stream.WriteByte(1)
   else
     stream.WriteByte(0);
+  cf := forbiddenCubeRecord.X1;
+  stream.WriteDWord(PUINT32(@cf)^);
+  cf := forbiddenCubeRecord.Y1;
+  stream.WriteDWord(PUINT32(@cf)^);
+  cf := forbiddenCubeRecord.Z1;
+  stream.WriteDWord(PUINT32(@cf)^);
+  cf := forbiddenCubeRecord.X2;
+  stream.WriteDWord(PUINT32(@cf)^);
+  cf := forbiddenCubeRecord.Y2;
+  stream.WriteDWord(PUINT32(@cf)^);
+  cf := forbiddenCubeRecord.Z2;
+  stream.WriteDWord(PUINT32(@cf)^);
 end;
 
 procedure TMissionScript.StoreCarGenerator(carGeneratorRecord: TCarGeneratorVar; stream: TStream);
 var
   cf: cfloat;
 begin
-  if carGeneratorRecord.Used then
-    begin
-      stream.WriteByte(1);
-      if carGeneratorRecord.IsActive then
-        stream.WriteByte(1)
-      else
-        stream.WriteByte(1);
-      stream.WriteDWord(carGeneratorRecord.Model);
-      cf := carGeneratorRecord.X;
-      stream.WriteDWord(PUINT32(@cf)^);
-      cf := carGeneratorRecord.Y;
-      stream.WriteDWord(PUINT32(@cf)^);
-      cf := carGeneratorRecord.Z;
-      stream.WriteDWord(PUINT32(@cf)^);
-      cf := carGeneratorRecord.A;
-      stream.WriteDWord(PUINT32(@cf)^);
-    end
+  if carGeneratorRecord.IsActive then
+    stream.WriteByte(1)
   else
-    stream.WriteByte(0);
+    stream.WriteByte(1);
+  stream.WriteDWord(carGeneratorRecord.Model);
+  cf := carGeneratorRecord.X;
+  stream.WriteDWord(PUINT32(@cf)^);
+  cf := carGeneratorRecord.Y;
+  stream.WriteDWord(PUINT32(@cf)^);
+  cf := carGeneratorRecord.Z;
+  stream.WriteDWord(PUINT32(@cf)^);
+  cf := carGeneratorRecord.A;
+  stream.WriteDWord(PUINT32(@cf)^);
 end;
 
 procedure TMissionScript.StorePlayer(var data: TStoredPlayerData; actor: Ped);
@@ -1344,7 +1311,8 @@ begin
           globalArrays[i].Used := (stream.ReadByte <> 0);
           if globalArrays[i].Used then
             begin
-              GTA5_SetArrayLength(globalArrays[i].Value, integer(stream.ReadDWord));
+              u32 := stream.ReadDWord;
+              GTA5_SetArrayLength(globalArrays[i].Value, integer(u32));
               for j := 0 to GTA5_GetArrayLength(globalArrays[i].Value) - 1 do
                   GTA5_SetArrayItem(globalArrays[i].Value, j, stream.ReadDWord);
             end;
@@ -1485,6 +1453,7 @@ begin
           u32 := stream.ReadDWord;
           policeRestarts[i].A := pcfloat(@u32)^;
         end;
+
     j := integer(stream.ReadDWord);
     for i := 0 to j - 1 do
         begin
@@ -1518,6 +1487,7 @@ begin
           if storedPlayerData[i].Used then
             LoadPlayerData(storedPlayerData[i].Data, stream, v_major, v_minor);
         end;
+
 
     // **** GARAGE PERSISTENCE (Stored Cars) **** //
     SetLength(storedVehicleData, integer(stream.ReadDWord));
@@ -1613,7 +1583,7 @@ begin
         if globalArrays[i].Used then
           begin
             stream.WriteByte(1);
-            stream.WriteDWord(cint(GTA5_GetArrayLength(globalArrays[i].Value)) );
+            stream.WriteDWord(cint(GTA5_GetArrayLength(globalArrays[i].Value)));
             for j := 0 to GTA5_GetArrayLength(globalArrays[i].Value) - 1 do
                 stream.WriteDWord(GTA5_GetArrayItem(globalArrays[i].Value, j));
           end

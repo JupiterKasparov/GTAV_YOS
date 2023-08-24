@@ -142,6 +142,8 @@ var
   oldMaxIndex, i: integer;
   ci: cint;
 begin
+  if (newLength < 0) then
+     newLength := 0;
   oldMaxIndex := High(arr);
 
   // Set GTA5 array length
@@ -150,9 +152,12 @@ begin
   arr[0] := PUINT32(@ci)^;
 
   // Fill newly added space with zeroes
-  if (newLength > (oldMaxIndex + 1)) then
+  if (High(arr) > oldMaxIndex) then
      for i := oldMaxIndex + 1 to High(arr) do
-         arr[i] := 0;
+         begin
+           if (i > 1) then // First two items are taboo!
+              arr[i] := 0;
+         end;
 end;
 
 procedure GTA5_SetArrayItem(var arr: TGTA5Array; index: integer; newValue: UINT32);
@@ -161,8 +166,11 @@ begin
 end;
 
 function GTA5_GetArrayLength(var arr: TGTA5Array): integer;
+var
+  len: UINT32;
 begin
-  Result := integer(pcint(@arr[0])^);
+  len := arr[0];
+  Result := integer(pcint(@len)^);
 end;
 
 function GTA5_GetArrayItem(var arr: TGTA5Array; index: integer): UINT32;
