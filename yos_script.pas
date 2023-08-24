@@ -459,6 +459,8 @@ begin
                 script.bytes.Position := offset + position;
                 inc(position, 2); {--->>> 2b opcode}
                 CallOpcodeHandler(script.bytes.ReadWord);
+                for i := 0 to High(timers) do
+                    timers[i] := timers[i] + ((CurrentTimeMs - lastRunTime) / 1000); // Increase Timers
                 lastRunTime := CurrentTimeMs;
               end;
           end
