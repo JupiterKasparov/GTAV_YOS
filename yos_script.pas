@@ -163,7 +163,7 @@ type
     constructor Create(owner: TMissionScript; stream: TStream; savMajorVer, savMinorVer: integer); // Used, when the thread data is loaded from a savegame file
     destructor Destroy; override;
     procedure Save(stream: TStream); // Used, when the thread data is saved into a savegame file
-    procedure Run;
+    procedure Run(isPlayerDead: boolean);
     property ThreadName: string read scriptName;
     property ThreadStatus: TMissionThreadStatus read status write status;
   end;
@@ -225,7 +225,7 @@ type
     procedure Load(savefile: string); // Used, when the script data is loaded from a savegame file
     procedure Save(savefile: string); // Used, when the script data is saved into a savegame file
     procedure Reset;
-    procedure Run;
+    procedure Run(isPlayerDead: boolean);
     function IsAvailable: boolean;
     function ThreadCount: integer; // Number of running threads
     function FindNearestRespawnLocation(out location: TRespawnLocation; findHospital: boolean): boolean;
@@ -407,7 +407,7 @@ begin
     stream.WriteByte(0);
 end;
 
-procedure TMissionThread.Run;
+procedure TMissionThread.Run(isPlayerDead: boolean);
 var
   currentTime: INT64;
   i: integer;
@@ -416,16 +416,16 @@ begin
     while (status = tstRunning) or (status = tstWaiting) do
           begin
             // If the wasted-busted return is active, and the player is wasted or busted, perform a return from a wb gosub function
-            if wbGosubActive and (gosubLevel <= wbGosubLevel) and ((IS_PLAYER_BEING_ARRESTED(GET_PLAYER_INDEX, BOOL(0)) <> BOOL(0)) or (IS_PLAYER_DEAD(GET_PLAYER_INDEX) <> BOOL(0))) then
+            if wbGosubActive and (gosubLevel > wbGosubLevel) and isPlayerDead then
               begin
                 wbGosubActive := false;
                 gosubLevel := wbGosubLevel;
                 position := wbGosubReturn;
                 waitTime := 0;
-              end
+              end;
 
             // If we have ANY amount of wait time remaining, we just wait...
-            else if (waitTime > 0) then
+            if (waitTime > 0) then
               begin
                 currentTime := CurrentTimeMs;
                 lastRunTimeDiff := lastRunTimeDiff + (currentTime - lastRunTime);
@@ -443,7 +443,7 @@ begin
                   end;
                 lastRunTime := CurrentTimeMs;
                 break;
-            end
+              end
 
             // If we have NO wait time remaining, but we're still in the 'waiting' state, switch back to the 'running' state
             else if (status = tstWaiting) then
@@ -1873,7 +1873,7 @@ begin
     end;
 end;
 
-procedure TMissionScript.Run;
+procedure TMissionScript.Run(isPlayerDead: boolean);
 var
   i, j: integer;
 begin
@@ -1894,7 +1894,7 @@ begin
       // Run threads
       for i := 0 to High(threads) do
           if (threads[i].ThreadStatus <> tstFinished) then
-            threads[i].Run;
+            threads[i].Run(isPlayerDead);
 
       // Cleanup finished threads
       for i := High(threads) downto 0 do

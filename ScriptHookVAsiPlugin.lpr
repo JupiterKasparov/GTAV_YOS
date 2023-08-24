@@ -11,6 +11,7 @@ var
   worldInitComplete: boolean;
   eventId: TMenuEventType;
   sgi: integer;
+  isPlayerDead: boolean;
 begin
   worldInitComplete := false;
   SET_THIS_SCRIPT_CAN_BE_PAUSED(BOOL(0));
@@ -37,7 +38,8 @@ begin
                   end;
                if (GameScreen.MenuMode = gmInGame) then
                   begin
-                    if (IS_CONTROL_JUST_RELEASED(0, 244) <> BOOL(0)) and (IS_PLAYER_DEAD(GET_PLAYER_INDEX) = BOOL(0)) and (IS_PLAYER_BEING_ARRESTED(GET_PLAYER_INDEX, BOOL(0)) = BOOL(0)) then
+                    isPlayerDead := (IS_PLAYER_DEAD(GET_PLAYER_INDEX) <> BOOL(0)) or (IS_PLAYER_BEING_ARRESTED(GET_PLAYER_INDEX, BOOL(0)) <> BOOL(0));
+                    if (IS_CONTROL_JUST_RELEASED(0, 244) <> BOOL(0)) and (not isPlayerDead) then
                        begin
                          if MissionScript.IsAvailable then
                             GameScreen.MenuMode := gmLoadGame
@@ -45,11 +47,11 @@ begin
                             PushMapNotification('~o~Without a runnable mission script, the menu is disabled!');
                        end
                     else
-                       MissionScript.Run;
+                       MissionScript.Run(isPlayerDead);
                   end
                else
                   begin
-                    MissionScript.Run;
+                    MissionScript.Run(false);
                     if GameScreen.ProcessMenu(eventId, sgi, MissionScript.GetInternalPlayerIndex, MissionScript.IsGameStarted) then
                        begin
                          case eventId of

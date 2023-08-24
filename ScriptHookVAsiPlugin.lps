@@ -8,7 +8,10 @@
       <Unit0>
         <Filename Value="ScriptHookVAsiPlugin.lpr"/>
         <IsPartOfProject Value="True"/>
-        <UsageCount Value="174"/>
+        <IsVisibleTab Value="True"/>
+        <TopLine Value="26"/>
+        <CursorPos X="56" Y="50"/>
+        <UsageCount Value="177"/>
         <Loaded Value="True"/>
       </Unit0>
       <Unit1>
@@ -16,37 +19,35 @@
         <IsPartOfProject Value="True"/>
         <UnitName Value="ScriptHookV"/>
         <EditorIndex Value="-1"/>
-        <UsageCount Value="174"/>
+        <UsageCount Value="177"/>
       </Unit1>
       <Unit2>
         <Filename Value="natives.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="Natives"/>
         <EditorIndex Value="-1"/>
-        <UsageCount Value="174"/>
+        <UsageCount Value="177"/>
       </Unit2>
       <Unit3>
         <Filename Value="yos_script.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="YOS_Script"/>
-        <IsVisibleTab Value="True"/>
         <EditorIndex Value="2"/>
-        <CursorPos X="28" Y="12"/>
-        <UsageCount Value="174"/>
+        <UsageCount Value="177"/>
         <Loaded Value="True"/>
       </Unit3>
       <Unit4>
         <Filename Value="opcodes.inc"/>
         <IsPartOfProject Value="True"/>
         <EditorIndex Value="4"/>
-        <UsageCount Value="174"/>
+        <UsageCount Value="177"/>
         <Loaded Value="True"/>
       </Unit4>
       <Unit5>
         <Filename Value="opcode_bin_helpers.inc"/>
         <IsPartOfProject Value="True"/>
         <EditorIndex Value="5"/>
-        <UsageCount Value="174"/>
+        <UsageCount Value="177"/>
         <Loaded Value="True"/>
       </Unit5>
       <Unit6>
@@ -54,7 +55,7 @@
         <IsPartOfProject Value="True"/>
         <UnitName Value="YOS_Screen"/>
         <EditorIndex Value="3"/>
-        <UsageCount Value="174"/>
+        <UsageCount Value="177"/>
         <Loaded Value="True"/>
       </Unit6>
       <Unit7>
@@ -62,7 +63,7 @@
         <IsPartOfProject Value="True"/>
         <UnitName Value="YOS_Utils"/>
         <EditorIndex Value="6"/>
-        <UsageCount Value="132"/>
+        <UsageCount Value="135"/>
         <Loaded Value="True"/>
       </Unit7>
       <Unit8>
@@ -70,7 +71,7 @@
         <IsPartOfProject Value="True"/>
         <UnitName Value="YOS_WorldManager"/>
         <EditorIndex Value="1"/>
-        <UsageCount Value="92"/>
+        <UsageCount Value="95"/>
         <Loaded Value="True"/>
       </Unit8>
       <Unit9>
@@ -82,119 +83,121 @@
     <JumpHistory Count="30" HistoryIndex="29">
       <Position1>
         <Filename Value="yos_script.pas"/>
-        <Caret Line="204" Column="28" TopLine="171"/>
+        <Caret Line="290" Column="14" TopLine="255"/>
       </Position1>
       <Position2>
         <Filename Value="yos_script.pas"/>
-        <Caret Line="918" Column="39" TopLine="898"/>
+        <Caret Line="328" Column="14" TopLine="302"/>
       </Position2>
       <Position3>
         <Filename Value="yos_script.pas"/>
+        <Caret Line="423" Column="28" TopLine="394"/>
       </Position3>
       <Position4>
-        <Filename Value="opcodes.inc"/>
-        <Caret Line="600" Column="87" TopLine="590"/>
+        <Filename Value="yos_script.pas"/>
+        <Caret Line="459" Column="41" TopLine="425"/>
       </Position4>
       <Position5>
         <Filename Value="yos_script.pas"/>
+        <Caret Line="14" Column="143"/>
       </Position5>
       <Position6>
         <Filename Value="yos_script.pas"/>
-        <Caret Line="1095" Column="46" TopLine="1060"/>
+        <Caret Line="290" Column="14" TopLine="264"/>
       </Position6>
       <Position7>
         <Filename Value="yos_script.pas"/>
-        <Caret Line="238" Column="55" TopLine="208"/>
+        <Caret Line="328" Column="14" TopLine="302"/>
       </Position7>
       <Position8>
         <Filename Value="yos_script.pas"/>
-        <Caret Line="160" Column="62" TopLine="140"/>
+        <Caret Line="423" Column="28" TopLine="394"/>
       </Position8>
       <Position9>
         <Filename Value="yos_script.pas"/>
-        <Caret Line="162" Column="35" TopLine="140"/>
+        <Caret Line="459" Column="41" TopLine="425"/>
       </Position9>
       <Position10>
-        <Filename Value="yos_script.pas"/>
-        <Caret Line="217" Column="72" TopLine="183"/>
+        <Filename Value="opcodes.inc"/>
       </Position10>
       <Position11>
-        <Filename Value="yos_script.pas"/>
-        <Caret Line="316" Column="73" TopLine="287"/>
+        <Filename Value="opcodes.inc"/>
+        <Caret Line="55" Column="35" TopLine="16"/>
       </Position11>
       <Position12>
-        <Filename Value="yos_script.pas"/>
-        <Caret Line="367" Column="46" TopLine="338"/>
+        <Filename Value="opcodes.inc"/>
+        <Caret Line="89" Column="37" TopLine="56"/>
       </Position12>
       <Position13>
-        <Filename Value="yos_script.pas"/>
-        <Caret Line="671" Column="136" TopLine="636"/>
+        <Filename Value="opcodes.inc"/>
+        <Caret Line="2267" Column="70" TopLine="2246"/>
       </Position13>
       <Position14>
-        <Filename Value="yos_script.pas"/>
-        <Caret Line="713" Column="141" TopLine="678"/>
+        <Filename Value="opcodes.inc"/>
+        <Caret Line="19" Column="138"/>
       </Position14>
       <Position15>
-        <Filename Value="yos_script.pas"/>
-        <Caret Line="740" Column="138" TopLine="705"/>
+        <Filename Value="opcodes.inc"/>
+        <Caret Line="47" Column="26" TopLine="28"/>
       </Position15>
       <Position16>
-        <Filename Value="yos_script.pas"/>
-        <Caret Line="766" Column="91" TopLine="731"/>
+        <Filename Value="opcodes.inc"/>
+        <Caret Line="46" Column="27" TopLine="28"/>
       </Position16>
       <Position17>
-        <Filename Value="yos_script.pas"/>
-        <Caret Line="804" Column="100" TopLine="769"/>
+        <Filename Value="opcodes.inc"/>
+        <Caret Line="47" Column="26" TopLine="28"/>
       </Position17>
       <Position18>
         <Filename Value="yos_script.pas"/>
-        <Caret Line="832" Column="97" TopLine="797"/>
       </Position18>
       <Position19>
         <Filename Value="yos_script.pas"/>
-        <Caret Line="989" Column="120" TopLine="954"/>
+        <Caret Line="140" Column="18" TopLine="105"/>
       </Position19>
       <Position20>
         <Filename Value="yos_script.pas"/>
-        <Caret Line="1036" Column="81" TopLine="1001"/>
+        <Caret Line="306" Column="16" TopLine="271"/>
       </Position20>
       <Position21>
         <Filename Value="yos_script.pas"/>
-        <Caret Line="1157" Column="122" TopLine="1122"/>
+        <Caret Line="349" Column="16" TopLine="314"/>
       </Position21>
       <Position22>
         <Filename Value="yos_script.pas"/>
-        <Caret Line="1305" Column="31" TopLine="1279"/>
+        <Caret Line="350" Column="19" TopLine="315"/>
       </Position22>
       <Position23>
         <Filename Value="yos_script.pas"/>
-        <Caret Line="423" Column="47" TopLine="403"/>
+        <Caret Line="400" Column="19" TopLine="365"/>
       </Position23>
       <Position24>
         <Filename Value="yos_script.pas"/>
-        <Caret Line="1036" Column="30" TopLine="1025"/>
+        <Caret Line="419" Column="29" TopLine="384"/>
       </Position24>
       <Position25>
-        <Filename Value="yos_script.pas"/>
-        <Caret Line="1205" Column="30" TopLine="1170"/>
+        <Filename Value="opcodes.inc"/>
+        <Caret Line="1878" Column="119" TopLine="1855"/>
       </Position25>
       <Position26>
         <Filename Value="yos_script.pas"/>
-        <Caret Line="13" Column="135"/>
+        <Caret Line="866" Column="51" TopLine="851"/>
       </Position26>
       <Position27>
         <Filename Value="yos_script.pas"/>
-        <Caret Line="1040" Column="30" TopLine="1017"/>
+        <Caret Line="410" Column="29" TopLine="389"/>
       </Position27>
       <Position28>
         <Filename Value="yos_script.pas"/>
-        <Caret Line="1209" Column="30" TopLine="1174"/>
+        <Caret Line="13" Column="142"/>
       </Position28>
       <Position29>
-        <Filename Value="opcodes.inc"/>
+        <Filename Value="yos_script.pas"/>
+        <Caret Line="24" Column="33"/>
       </Position29>
       <Position30>
         <Filename Value="yos_script.pas"/>
+        <Caret Line="166" Column="43" TopLine="134"/>
       </Position30>
     </JumpHistory>
   </ProjectSession>
