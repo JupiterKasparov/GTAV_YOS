@@ -814,7 +814,7 @@ begin
   if carGeneratorRecord.IsActive then
     stream.WriteByte(1)
   else
-    stream.WriteByte(1);
+    stream.WriteByte(0);
   stream.WriteDWord(carGeneratorRecord.Model);
   cf := carGeneratorRecord.X;
   stream.WriteDWord(PUINT32(@cf)^);
