@@ -1,0 +1,23 @@
+License:
+
+This mod is open source. You have the opportunity to reuse code from this mod, but you should credit the author of the particular code you plan to use:
+* GTA5 Array functions (yos_utils.pas): originally based on https://gtaforums.com/topic/789788-function-args-to-pedget_ped_nearby_peds/
+* IsInAngledCube function (yos_utils.pas): originally generated with the help of iAsk.AI
+* KillStoryScripts function (yos_worldmanager.pas): originally based on code from GTAV Override by Konijima
+* All other code from this mod belongs directly to me!
+
+Forks and bug fixes:
+If you would like to release bug fixes or improvements (either by forking, or contributing), don't do that.
+This is, to keep the mod always compatible with existing savegames and scripts, and not having numerous different incompatible mod versions.
+You should do the following instead:
+1, Fully finish and thoroughly test your solution before attempting anything!
+2, Contact me in a PM or something. Send me your solution (all modified code) in PM.
+3, Wait for me to reply!
+ * If I don't reply within 3 days, you may send me your PM again...
+ * If I don't reply within 3 weeks, you may do a fork, but it'll be potentially incompatible. You should send me a PM with a link to your fork.
+ * If I don't reply within 3 months, you may assume I don't maintain this mod aymore! You may do a fork. You should send me a PM with a link to your fork.
+
+And let's see some other 'rules':
+* Do not link any external repository to this repository! If you would like to use code, always copy the file to your own repository (and credit me).
+* Do not reupload this source code, if this repository is still available!
+
