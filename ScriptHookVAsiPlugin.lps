@@ -8,6 +8,8 @@
       <Unit0>
         <Filename Value="ScriptHookVAsiPlugin.lpr"/>
         <IsPartOfProject Value="True"/>
+        <IsVisibleTab Value="True"/>
+        <CursorPos X="48" Y="29"/>
         <UsageCount Value="183"/>
         <Loaded Value="True"/>
       </Unit0>
@@ -29,8 +31,9 @@
         <Filename Value="yos_script.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="YOS_Script"/>
-        <IsVisibleTab Value="True"/>
         <EditorIndex Value="2"/>
+        <TopLine Value="1762"/>
+        <CursorPos X="44" Y="1776"/>
         <UsageCount Value="183"/>
         <Loaded Value="True"/>
       </Unit3>
@@ -81,123 +84,122 @@
     <JumpHistory Count="30" HistoryIndex="29">
       <Position1>
         <Filename Value="yos_script.pas"/>
-        <Caret Line="377" Column="20" TopLine="348"/>
+        <Caret Line="388" Column="20" TopLine="353"/>
       </Position1>
       <Position2>
         <Filename Value="yos_script.pas"/>
-        <Caret Line="380" Column="20" TopLine="348"/>
+        <Caret Line="392" Column="26" TopLine="357"/>
       </Position2>
       <Position3>
         <Filename Value="yos_script.pas"/>
-        <Caret Line="385" Column="26" TopLine="350"/>
+        <Caret Line="394" Column="26" TopLine="372"/>
       </Position3>
       <Position4>
         <Filename Value="yos_script.pas"/>
-        <Caret Line="388" Column="20" TopLine="353"/>
+        <Caret Line="402" Column="24" TopLine="372"/>
       </Position4>
       <Position5>
         <Filename Value="yos_script.pas"/>
-        <Caret Line="392" Column="26" TopLine="357"/>
+        <Caret Line="403" Column="24" TopLine="372"/>
       </Position5>
       <Position6>
         <Filename Value="yos_script.pas"/>
-        <Caret Line="394" Column="26" TopLine="372"/>
+        <Caret Line="407" Column="22" TopLine="373"/>
       </Position6>
       <Position7>
         <Filename Value="yos_script.pas"/>
-        <Caret Line="402" Column="24" TopLine="372"/>
+        <Caret Line="793" Column="22" TopLine="758"/>
       </Position7>
       <Position8>
         <Filename Value="yos_script.pas"/>
-        <Caret Line="403" Column="24" TopLine="372"/>
+        <Caret Line="795" Column="22" TopLine="760"/>
       </Position8>
       <Position9>
         <Filename Value="yos_script.pas"/>
-        <Caret Line="407" Column="22" TopLine="373"/>
+        <Caret Line="817" Column="23" TopLine="780"/>
       </Position9>
       <Position10>
         <Filename Value="yos_script.pas"/>
-        <Caret Line="793" Column="22" TopLine="758"/>
+        <Caret Line="1047" Column="24" TopLine="1013"/>
       </Position10>
       <Position11>
         <Filename Value="yos_script.pas"/>
-        <Caret Line="795" Column="22" TopLine="760"/>
+        <Caret Line="1051" Column="22" TopLine="1017"/>
       </Position11>
       <Position12>
         <Filename Value="yos_script.pas"/>
-        <Caret Line="817" Column="23" TopLine="780"/>
+        <Caret Line="1183" Column="22" TopLine="1148"/>
       </Position12>
       <Position13>
         <Filename Value="yos_script.pas"/>
-        <Caret Line="1047" Column="24" TopLine="1013"/>
+        <Caret Line="1185" Column="22" TopLine="1150"/>
       </Position13>
       <Position14>
         <Filename Value="yos_script.pas"/>
-        <Caret Line="1051" Column="22" TopLine="1017"/>
+        <Caret Line="1545" Column="24" TopLine="1510"/>
       </Position14>
       <Position15>
         <Filename Value="yos_script.pas"/>
-        <Caret Line="1183" Column="22" TopLine="1148"/>
+        <Caret Line="1547" Column="24" TopLine="1512"/>
       </Position15>
       <Position16>
         <Filename Value="yos_script.pas"/>
-        <Caret Line="1185" Column="22" TopLine="1150"/>
+        <Caret Line="1559" Column="28" TopLine="1524"/>
       </Position16>
       <Position17>
         <Filename Value="yos_script.pas"/>
-        <Caret Line="1545" Column="24" TopLine="1510"/>
+        <Caret Line="1567" Column="30" TopLine="1533"/>
       </Position17>
       <Position18>
         <Filename Value="yos_script.pas"/>
-        <Caret Line="1547" Column="24" TopLine="1512"/>
+        <Caret Line="1571" Column="28" TopLine="1537"/>
       </Position18>
       <Position19>
         <Filename Value="yos_script.pas"/>
-        <Caret Line="1559" Column="28" TopLine="1524"/>
+        <Caret Line="1575" Column="30" TopLine="1541"/>
       </Position19>
       <Position20>
         <Filename Value="yos_script.pas"/>
-        <Caret Line="1567" Column="30" TopLine="1533"/>
+        <Caret Line="1581" Column="28" TopLine="1547"/>
       </Position20>
       <Position21>
         <Filename Value="yos_script.pas"/>
-        <Caret Line="1571" Column="28" TopLine="1537"/>
+        <Caret Line="1585" Column="30" TopLine="1551"/>
       </Position21>
       <Position22>
         <Filename Value="yos_script.pas"/>
-        <Caret Line="1575" Column="30" TopLine="1541"/>
+        <Caret Line="1591" Column="28" TopLine="1557"/>
       </Position22>
       <Position23>
         <Filename Value="yos_script.pas"/>
-        <Caret Line="1581" Column="28" TopLine="1547"/>
+        <Caret Line="1595" Column="30" TopLine="1561"/>
       </Position23>
       <Position24>
         <Filename Value="yos_script.pas"/>
-        <Caret Line="1585" Column="30" TopLine="1551"/>
+        <Caret Line="1601" Column="28" TopLine="1567"/>
       </Position24>
       <Position25>
         <Filename Value="yos_script.pas"/>
-        <Caret Line="1591" Column="28" TopLine="1557"/>
+        <Caret Line="1605" Column="30" TopLine="1571"/>
       </Position25>
       <Position26>
         <Filename Value="yos_script.pas"/>
-        <Caret Line="1595" Column="30" TopLine="1561"/>
+        <Caret Line="1688" Column="31" TopLine="1666"/>
       </Position26>
       <Position27>
         <Filename Value="yos_script.pas"/>
-        <Caret Line="1601" Column="28" TopLine="1567"/>
       </Position27>
       <Position28>
         <Filename Value="yos_script.pas"/>
-        <Caret Line="1605" Column="30" TopLine="1571"/>
+        <Caret Line="1262" Column="52" TopLine="1232"/>
       </Position28>
       <Position29>
         <Filename Value="yos_script.pas"/>
-        <Caret Line="1688" Column="31" TopLine="1666"/>
+        <Caret Line="226" Column="33" TopLine="205"/>
       </Position29>
       <Position30>
         <Filename Value="yos_script.pas"/>
-        <Caret Line="1699" Column="26" TopLine="1713"/>
+        <Caret Line="1260" Column="43" TopLine="1225"/>
       </Position30>
     </JumpHistory>
   </ProjectSession>

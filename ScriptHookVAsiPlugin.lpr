@@ -18,15 +18,17 @@ begin
   SET_THIS_SCRIPT_CAN_REMOVE_BLIPS_CREATED_BY_ANY_SCRIPT(BOOL(1));
   while true do
         begin
-          // If he have a loading screen, this may be the first game start, or a game reload...
-          if (GET_IS_LOADING_SCREEN_ACTIVE <> BOOL(0)) then
-             worldInitComplete := false
-          // We are in gameplay!
-          else if (GET_PLAYER_PED(GET_PLAYER_INDEX) <> 0) then
+          if (GET_PLAYER_PED(GET_PLAYER_INDEX) <> 0) then
              begin
                if (not worldInitComplete) then
                   begin
                     worldInitComplete := true;
+
+                    // Close laoding screen (if it was the Game Start)
+                    if (GET_IS_LOADING_SCREEN_ACTIVE <> BOOL(0)) then
+                       SHUTDOWN_LOADING_SCREEN;
+
+                    // World cleanup
                     KillStoryScripts;
                     ClearWorldMap;
                     ResetPlayerInfo;
@@ -69,10 +71,10 @@ begin
                                   GameScreen.DrawLoadingScreen;
                                   ClearWorldMap;
                                   ResetPlayerInfo;
-                                  MissionScript.Load(GetSaveFileName(sgi));
+                                  MissionScript.Load(sgi);
                                 end;
                               evtSaveGame:
-                                MissionScript.Save(GetSaveFileName(sgi));
+                                MissionScript.Save(sgi);
                          end;
                          if (eventId = evtCancelMenu) and (not MissionScript.IsGameStarted) and (GameScreen.MenuMode = gmLoadGame) then
                             // Prevent the user from exiting (re-entering) into The Prologue via Exiting or Alt-Tab

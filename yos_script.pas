@@ -222,8 +222,8 @@ type
     // Public functions
     constructor Create(scriptfile: string);
     destructor Destroy; override;
-    procedure Load(savefile: string); // Used, when the script data is loaded from a savegame file
-    procedure Save(savefile: string); // Used, when the script data is saved into a savegame file
+    procedure Load(slot: integer); // Used, when the script data is loaded from a savegame file
+    procedure Save(slot: integer); // Used, when the script data is saved into a savegame file
     procedure Reset;
     procedure Run(isPlayerDead: boolean);
     function IsAvailable: boolean;
@@ -1246,7 +1246,7 @@ end;
 
 {%region /fold 'Load / Save'}
 
-procedure TMissionScript.Load(savefile: string); // Used, when the script data is loaded from a savegame file
+procedure TMissionScript.Load(slot: integer); // Used, when the script data is loaded from a savegame file
 var
   stream: TFileStream;
   u32, u32b, u32c: UINT32;
@@ -1257,7 +1257,7 @@ var
   v_major, v_minor: DWORD;
 begin
   // **** START **** //
-  stream := TFileStream.Create(savefile, fmOpenRead);
+  stream := TFileStream.Create(GetSaveFileName(slot), fmOpenRead);
   try
     GameScreen.DrawLoadingScreen;
     ScriptHookVWait(0);
@@ -1526,7 +1526,7 @@ begin
   end;
 end;
 
-procedure TMissionScript.Save(savefile: string);
+procedure TMissionScript.Save(slot: integer);
 var
   stream: TMemoryStream;
   pdata: TStoredPlayerData;
@@ -1773,7 +1773,7 @@ begin
         end;
 
     // **** END **** //
-    stream.SaveToFile(savefile);
+    stream.SaveToFile(GetSaveFileName(slot));
   finally
     stream.Free;
   end;
