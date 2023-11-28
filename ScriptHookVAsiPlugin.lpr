@@ -24,7 +24,7 @@ begin
                   begin
                     worldInitComplete := true;
 
-                    // Close laoding screen (if it was the Game Start)
+                    // Close loading screen (if it was the Game Start)
                     if (GET_IS_LOADING_SCREEN_ACTIVE <> BOOL(0)) then
                        SHUTDOWN_LOADING_SCREEN;
 

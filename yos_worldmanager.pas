@@ -42,29 +42,28 @@ end;
 procedure ClearWorldMap;
 var
   i: integer;
-  northYanktonInterior, worldObjectCount: cint;
+  worldObjectCount: cint;
   worldObjectData: array [0..65535] of cint;
   b, next: Blip;
 begin
   // START
   DO_SCREEN_FADE_OUT(1);
 
-  // Removes Disabled maps
+  // Specifically closes North Yankton
+  SET_ZONE_ENABLED(GET_ZONE_FROM_NAME_ID(PChar('PrLog')), BOOL(0));
+  _0xAF12610C644A35C9(PChar('Prologue_Main'), BOOL(0)); // SET_MAPDATACULLBOX_ENABLED
+  _0xAF12610C644A35C9(PChar('prologue'), BOOL(0)); // SET_MAPDATACULLBOX_ENABLED
+
+  // Removes Disabled maps (by default, only North Yankton)
   for i := 0 to DisabledMapList.Count - 1 do
       REMOVE_IPL(PChar(DisabledMapList[i]));
 
-  // Specifically closes North Yankton
-  northYanktonInterior := GET_INTERIOR_AT_COORDS_WITH_TYPE(5311.236, -5212.563, 85.7187 - 3.2, PChar('V_CashDepot'));
-  UNPIN_INTERIOR(northYanktonInterior);
-  DISABLE_INTERIOR(northYanktonInterior, BOOL(1));
+  // Activate OUTSIDE interior
   SET_INTERIOR_ACTIVE(0, BOOL(1));
   REFRESH_INTERIOR(0);
   _SET_MINIMAP_VISIBLE(BOOL(0));
   UNLOCK_MINIMAP_ANGLE;
   UNLOCK_MINIMAP_POSITION;
-  SET_ZONE_ENABLED(GET_ZONE_FROM_NAME_ID(PChar('PrLog')), BOOL(0));
-  _0xAF12610C644A35C9(PChar('Prologue_Main'), BOOL(0)); // SET_MAPDATACULLBOX_ENABLED
-  _0xAF12610C644A35C9(PChar('prologue'), BOOL(0)); // SET_MAPDATACULLBOX_ENABLED
 
   // Expand world limits to an uniform, large value
   _0x5006D96C995A5827(12500.0, 12500.0, 30.0); // EXTEND_WORLD_BOUNDARY_FOR_PLAYER
@@ -107,6 +106,7 @@ begin
   CLEAR_AREA_OF_PEDS(0.0, 0.0, 0.0, 25000.0, 1);
   CLEAR_AREA_OF_VEHICLES(0.0, 0.0, 0.0, 25000.0, BOOL(0), BOOL(0), BOOL(0), BOOL(0), BOOL(0));
   CLEAR_AREA(0.0, 0.0, 0.0, 25000.0, BOOL(1), BOOL(0), BOOL(0), BOOL(0));
+  _0xD79185689F8FD5DF(BOOL(0)); // SET_STUNT_JUMPS_CAN_TRIGGER
 
   worldObjectCount := worldGetAllPickups(pcint(worldObjectData), Length(worldObjectData));
   for i := 0 to worldObjectCount - 1 do
@@ -212,6 +212,8 @@ begin
           GameScreen.DrawLoadingScreen;
           ScriptHookVWait(0);
         end;
+  SET_ENTITY_COORDS(GET_PLAYER_PED(plyr), DefaultRespawnLocation.X, DefaultRespawnLocation.Y, DefaultRespawnLocation.Z, BOOL(0), BOOL(0), BOOL(0), BOOL(0));
+  SET_ENTITY_HEADING(GET_PLAYER_PED(plyr), DefaultRespawnLocation.A);
   veh := CREATE_VEHICLE(h, DefaultRespawnLocation.X, DefaultRespawnLocation.Y, DefaultRespawnLocation.Z, DefaultRespawnLocation.A, BOOL(0), BOOL(0));
   SET_PED_INTO_VEHICLE(GET_PLAYER_PED(plyr), veh, -1);
   SET_VEHICLE_AS_NO_LONGER_NEEDED(@veh);
