@@ -9,7 +9,7 @@
         <Filename Value="ScriptHookVAsiPlugin.lpr"/>
         <IsPartOfProject Value="True"/>
         <IsVisibleTab Value="True"/>
-        <UsageCount Value="184"/>
+        <UsageCount Value="187"/>
         <Loaded Value="True"/>
       </Unit0>
       <Unit1>
@@ -17,35 +17,35 @@
         <IsPartOfProject Value="True"/>
         <UnitName Value="ScriptHookV"/>
         <EditorIndex Value="-1"/>
-        <UsageCount Value="184"/>
+        <UsageCount Value="187"/>
       </Unit1>
       <Unit2>
         <Filename Value="natives.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="Natives"/>
         <EditorIndex Value="-1"/>
-        <UsageCount Value="184"/>
+        <UsageCount Value="187"/>
       </Unit2>
       <Unit3>
         <Filename Value="yos_script.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="YOS_Script"/>
         <EditorIndex Value="2"/>
-        <UsageCount Value="184"/>
+        <UsageCount Value="187"/>
         <Loaded Value="True"/>
       </Unit3>
       <Unit4>
         <Filename Value="opcodes.inc"/>
         <IsPartOfProject Value="True"/>
         <EditorIndex Value="4"/>
-        <UsageCount Value="184"/>
+        <UsageCount Value="187"/>
         <Loaded Value="True"/>
       </Unit4>
       <Unit5>
         <Filename Value="opcode_bin_helpers.inc"/>
         <IsPartOfProject Value="True"/>
         <EditorIndex Value="5"/>
-        <UsageCount Value="184"/>
+        <UsageCount Value="187"/>
         <Loaded Value="True"/>
       </Unit5>
       <Unit6>
@@ -53,7 +53,7 @@
         <IsPartOfProject Value="True"/>
         <UnitName Value="YOS_Screen"/>
         <EditorIndex Value="3"/>
-        <UsageCount Value="184"/>
+        <UsageCount Value="187"/>
         <Loaded Value="True"/>
       </Unit6>
       <Unit7>
@@ -61,7 +61,7 @@
         <IsPartOfProject Value="True"/>
         <UnitName Value="YOS_Utils"/>
         <EditorIndex Value="6"/>
-        <UsageCount Value="142"/>
+        <UsageCount Value="145"/>
         <Loaded Value="True"/>
       </Unit7>
       <Unit8>
@@ -69,7 +69,7 @@
         <IsPartOfProject Value="True"/>
         <UnitName Value="YOS_WorldManager"/>
         <EditorIndex Value="1"/>
-        <UsageCount Value="102"/>
+        <UsageCount Value="105"/>
         <Loaded Value="True"/>
       </Unit8>
       <Unit9>

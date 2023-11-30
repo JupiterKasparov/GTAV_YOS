@@ -18,7 +18,7 @@ uses
   YOS_Script;
 
 var
-  DisabledScriptList, DisabledMapList: TStrings;
+  DisabledScriptList, DisabledMapList, AudioFlagList: TStrings;
 
 procedure KillStoryScripts;
 var
@@ -81,13 +81,11 @@ begin
 
   // Reset world flags
   SET_RANDOM_TRAINS(BOOL(1));
-  SET_AUDIO_FLAG(PChar('PoliceScannerDisabled'), BOOL(0));
+  for i := 0 to AudioFlagList.Count - 1 do
+      SET_AUDIO_FLAG(PChar(AudioFlagList[i]), BOOL(0));
   SET_CREATE_RANDOM_COPS(BOOL(1));
-  ENABLE_DISPATCH_SERVICE(1, BOOL(1));
-  ENABLE_DISPATCH_SERVICE(2, BOOL(1));
-  ENABLE_DISPATCH_SERVICE(3, BOOL(1));
-  ENABLE_DISPATCH_SERVICE(4, BOOL(1));
-  ENABLE_DISPATCH_SERVICE(5, BOOL(1));
+  for i := 1 to 15 do
+      ENABLE_DISPATCH_SERVICE(cint(i), BOOL(1));
   SET_ALL_VEHICLE_GENERATORS_ACTIVE;
 
   // Clear game objects
@@ -223,10 +221,12 @@ end;
 initialization
   DisabledScriptList := ReadRawData('yos_data/data/GTAScriptList.dat');
   DisabledMapList := ReadRawData('yos_data/data/NorthYanktonList.dat');
+  AudioFlagList := ReadRawData('yos_data/data/AudioFlags.dat');
 
 finalization
   DisabledScriptList.Free;
   DisabledMapList.Free;
+  AudioFlagList.Free;
 
 end.
 
