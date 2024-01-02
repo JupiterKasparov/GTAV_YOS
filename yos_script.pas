@@ -9,7 +9,7 @@ uses
 
 const
   SCRIPT_MAJOR_VERSION = 2;
-  SCRIPT_MINOR_VERSION = 0;
+  SCRIPT_MINOR_VERSION = 1;
 
 type
   // Forward declarations
@@ -62,8 +62,10 @@ type
     _handle: GTAObject;
   end;
   TForbiddenCubeVar = record
-    Used, IsCarCube: boolean;
+    Used: boolean;
+    CubeType: byte;
     X1, Y1, Z1, X2, Y2, Z2: cfloat;
+    _handle: cint; // Handle used for Scenario Disabled Cubes
   end;
   TCarGeneratorVar = record
     Used, IsActive: boolean;
@@ -76,6 +78,15 @@ type
   TRespawnLocation = record
     X, Y, Z, A: cfloat;
   end;
+  TModelSwapRecord = record
+    OrigHash, NewHash: Hash;
+    X, Y, Z, Radius: cfloat;
+  end;
+  TModelHideRecord = record
+    ModelHash: Hash;
+    X, Y, Z, Radius: cfloat;
+  end;
+
   TStoredVehicleData = record
     Model, Color1, Color2, ColorCombo, ModKit, WheelType, WindowTint, Livery: cint;
     TireSmokeColor: array [0..2] of cint;
@@ -117,6 +128,10 @@ type
     X, Y, Z, A: cfloat;
     VehicleData: TStoredVehicleData;
   end;
+  TStoredVehicleSlot = record
+    IsStored: boolean;
+    VehicleData: TStoredVehicleData;
+  end;
 
   // Mission script thread manager class
   TMissionThread = class (TObject)
@@ -125,6 +140,7 @@ type
     script: TMissionScript;
     lastRunTime, lastRunTimeDiff: INT64;
     nativeCallResult: PUINT64;
+
     // Persistent properties
     offset: UINT64;
     position: INT64;
@@ -140,6 +156,7 @@ type
     wbGosubActive: boolean;
     wbGosubLevel: byte;
     wbGosubReturn: INT64;
+    isSavedGame, isSaveSuccessful: boolean;
     // Internal functions
     function GetVarData(vloc: TVariableLocation; id: word): UINT32;
     procedure SetVarData(vloc: TVariableLocation; vtype: TVariableType; id: word; value: UINT32);
@@ -190,10 +207,13 @@ type
     globalCarGenerators: array [0..511] of TCarGeneratorVar;
     storedPlayerData: array [0..2] of TMultiplayerPersistenceData;
     storedVehicleData: array of TVehiclePersistenceData;
+    storedVehicleSlots: array [0..15] of TStoredVehicleSlot;
     enabledMaps, disabledMaps: TStrings;
+    modelSwapRecords: array of TModelSwapRecord;
+    modelHideRecords: array of TModelHideRecord;
     hospitalRestarts, policeRestarts: array of TRespawnLocation;
     overrideRestart: TRespawnLocation;
-    useOverrideRestart, isOnMission, isSavedGame: boolean;
+    useOverrideRestart, isOnMission: boolean;
     lastMission: string;
     floatEqualThreshold: cfloat;
     // Internal functions
@@ -306,6 +326,8 @@ begin
   wbGosubActive := false;
   wbGosubLevel := 0;
   wbGosubReturn := 0;
+  isSavedGame := false;
+  isSaveSuccessful := false;
 end;
 
 constructor TMissionThread.Create(owner: TMissionScript; fileOffset: UINT64);
@@ -352,6 +374,7 @@ begin
       wbGosubLevel := stream.ReadByte;
       wbGosubReturn := INT64(stream.ReadQWord);
     end;
+  isSavedGame := true;
 end;
 
 destructor TMissionThread.Destroy;
@@ -405,6 +428,7 @@ begin
     end
   else
     stream.WriteByte(0);
+  isSaveSuccessful := true;
 end;
 
 procedure TMissionThread.Run(isPlayerDead: boolean);
@@ -547,10 +571,11 @@ begin
            globalForbiddenCubes[vindex].Used := false;
            if (not _is_dll_init_final_) then
              begin
-               if globalForbiddenCubes[vindex].IsCarCube then
-                 SET_ROADS_IN_AREA(globalForbiddenCubes[vindex].X1, globalForbiddenCubes[vindex].Y1, globalForbiddenCubes[vindex].Z1, globalForbiddenCubes[vindex].X2, globalForbiddenCubes[vindex].Y2, globalForbiddenCubes[vindex].Z2, BOOL(1), BOOL(1))
-               else
-                 SET_PED_PATHS_IN_AREA(globalForbiddenCubes[vindex].X1, globalForbiddenCubes[vindex].Y1, globalForbiddenCubes[vindex].Z1, globalForbiddenCubes[vindex].X2, globalForbiddenCubes[vindex].Y2, globalForbiddenCubes[vindex].Z2, BOOL(1));
+               case globalForbiddenCubes[vindex].CubeType of
+                    0: SET_PED_PATHS_BACK_TO_ORIGINAL(globalForbiddenCubes[vindex].X1, globalForbiddenCubes[vindex].Y1, globalForbiddenCubes[vindex].Z1, globalForbiddenCubes[vindex].X2, globalForbiddenCubes[vindex].Y2, globalForbiddenCubes[vindex].Z2, 1);
+                    1: SET_ROADS_BACK_TO_ORIGINAL(globalForbiddenCubes[vindex].X1, globalForbiddenCubes[vindex].Y1, globalForbiddenCubes[vindex].Z1, globalForbiddenCubes[vindex].X2, globalForbiddenCubes[vindex].Y2, globalForbiddenCubes[vindex].Z2, 1);
+                    2: REMOVE_SCENARIO_BLOCKING_AREA(globalForbiddenCubes[vindex]._handle, BOOL(0));
+               end;
              end;
            ZeroMemory(@globalForbiddenCubes[vindex], sizeof(TForbiddenCubeVar));
          end;
@@ -714,7 +739,7 @@ procedure TMissionScript.RestoreForbiddenCube(var forbiddenCubeRecord: TForbidde
 var
   u32: UINT32;
 begin
-  forbiddenCubeRecord.IsCarCube := (stream.ReadByte <> 0);
+  forbiddenCubeRecord.CubeType := stream.ReadByte;
   u32 := stream.ReadDWord;
   forbiddenCubeRecord.X1 := pcfloat(@u32)^;
   u32 := stream.ReadDWord;
@@ -727,10 +752,11 @@ begin
   forbiddenCubeRecord.Y2 := pcfloat(@u32)^;
   u32 := stream.ReadDWord;
   forbiddenCubeRecord.Z2 := pcfloat(@u32)^;
-  if forbiddenCubeRecord.IsCarCube then
-    SET_ROADS_IN_AREA(forbiddenCubeRecord.X1, forbiddenCubeRecord.Y1, forbiddenCubeRecord.Z1, forbiddenCubeRecord.X2, forbiddenCubeRecord.Y2, forbiddenCubeRecord.Z2, BOOL(0), BOOL(1))
-  else
-    SET_PED_PATHS_IN_AREA(forbiddenCubeRecord.X1, forbiddenCubeRecord.Y1, forbiddenCubeRecord.Z1, forbiddenCubeRecord.X2, forbiddenCubeRecord.Y2, forbiddenCubeRecord.Z2, BOOL(0));
+  case forbiddenCubeRecord.CubeType of
+       0: SET_PED_PATHS_IN_AREA(forbiddenCubeRecord.X1, forbiddenCubeRecord.Y1, forbiddenCubeRecord.Z1, forbiddenCubeRecord.X2, forbiddenCubeRecord.Y2, forbiddenCubeRecord.Z2, BOOL(0), 0);
+       1: SET_ROADS_IN_AREA(forbiddenCubeRecord.X1, forbiddenCubeRecord.Y1, forbiddenCubeRecord.Z1, forbiddenCubeRecord.X2, forbiddenCubeRecord.Y2, forbiddenCubeRecord.Z2, BOOL(0), BOOL(1));
+       2: forbiddenCubeRecord._handle := ADD_SCENARIO_BLOCKING_AREA(forbiddenCubeRecord.X1, forbiddenCubeRecord.Y1, forbiddenCubeRecord.Z1, forbiddenCubeRecord.X2, forbiddenCubeRecord.Y2, forbiddenCubeRecord.Z2, BOOL(0), BOOL(1), BOOL(1), BOOL(1), 1);
+  end;
 end;
 
 procedure TMissionScript.RestoreCarGenerator(var carGeneratorRecord: TCarGeneratorVar; stream: TStream; savMajorVer, savMinorVer: integer);
@@ -789,10 +815,7 @@ procedure TMissionScript.StoreForbiddenCube(forbiddenCubeRecord: TForbiddenCubeV
 var
   cf: cfloat;
 begin
-  if forbiddenCubeRecord.IsCarCube then
-    stream.WriteByte(1)
-  else
-    stream.WriteByte(0);
+  stream.WriteByte(forbiddenCubeRecord.CubeType);
   cf := forbiddenCubeRecord.X1;
   stream.WriteDWord(PUINT32(@cf)^);
   cf := forbiddenCubeRecord.Y1;
@@ -859,7 +882,7 @@ begin
         end;
   for i := 0 to 2 do
       begin
-        data.OutfitData.Props[i].PropIndex := GET_PED_PROP_INDEX(actor, cint(i));
+        data.OutfitData.Props[i].PropIndex := GET_PED_PROP_INDEX(actor, cint(i), 1);
         data.OutfitData.Props[i].PropTexture := GET_PED_PROP_TEXTURE_INDEX(actor, cint(i));
       end;
   // Weapon data
@@ -903,7 +926,7 @@ begin
   // Basic data
   SET_ENTITY_COORDS(actor, data.X, data.Y, data.Z, BOOL(0), BOOL(0), BOOL(0), BOOL(0));
   SET_ENTITY_HEADING(actor, data.A);
-  SET_ENTITY_HEALTH(actor, data.Health);
+  SET_ENTITY_HEALTH(actor, data.Health, 0, 0);
   SET_PED_MAX_HEALTH(actor, data.MaxHealth);
   SET_PED_ARMOUR(actor, data.Armor);
   // Model and outfit
@@ -926,7 +949,7 @@ begin
           if (i <> 7) then // Drawable 7 is unused!
             SET_PED_COMPONENT_VARIATION(actor, cint(i), data.OutfitData.Drawables[i].DrawableVar, data.OutfitData.Drawables[i].TextureVar, data.OutfitData.Drawables[i].PaletteVar);
       for i := 0 to 2 do
-          SET_PED_PROP_INDEX(actor, cint(i), data.OutfitData.Props[i].PropIndex, data.OutfitData.Props[i].PropTexture, BOOL(1));
+          SET_PED_PROP_INDEX(actor, cint(i), data.OutfitData.Props[i].PropIndex, data.OutfitData.Props[i].PropTexture, BOOL(0), 1);
     end;
   // Weapons
   REMOVE_ALL_PED_WEAPONS(actor, BOOL(0));
@@ -1102,7 +1125,7 @@ begin
           GameScreen.DrawLoadingScreen;
           ScriptHookVWait(0);
         end;
-  Result := CREATE_VEHICLE(data.VehicleData.Model, data.X, data.Y, data.Z, data.A, BOOL(0), BOOL(0));
+  Result := CREATE_VEHICLE(data.VehicleData.Model, data.X, data.Y, data.Z, data.A, BOOL(0), BOOL(0), BOOL(0));
   SET_VEHICLE_COLOURS(Result, data.VehicleData.Color1, data.VehicleData.Color2);
   SET_VEHICLE_COLOUR_COMBINATION(Result, data.VehicleData.ColorCombo);
   SET_VEHICLE_MOD_KIT(Result, data.VehicleData.ModKit);
@@ -1201,10 +1224,10 @@ begin
   SetLength(threads, 0);
   enabledMaps := TStringList.Create;
   disabledMaps := TStringList.Create;
+  SetLength(modelSwapRecords, 0);
+  SetLength(modelHideRecords, 0);
   for i := 0 to High(storedPlayerData) do
       SetLength(storedPlayerData[i].Data.WeaponData.WeaponList, 0);
-
-  SetLength(threads, 0);
 
   // Initial var table setup...
   for i := 0 to High(globalVars) do
@@ -1240,6 +1263,8 @@ begin
   Reset;
   enabledMaps.Free;
   disabledMaps.Free;
+  SetLength(modelSwapRecords, 0);
+  SetLength(modelHideRecords, 0);
   bytes.Free;
   inherited;
 end;
@@ -1264,7 +1289,6 @@ begin
     SET_GAME_PAUSED(BOOL(1));
     Reset;
     isStarted := true;
-    isSavedGame := true;
 
     // **** HEADER **** //
     v_major := stream.ReadDWord; // Savegame major version (for compatibility)
@@ -1415,7 +1439,7 @@ begin
     u32c := stream.ReadDWord;
     SET_CLOCK_DATE(u32, u32b, u32c);
     u32 := stream.ReadDWord;
-    _SET_WEATHER_TYPE_TRANSITION(u32, u32, 1.0);
+    SET_CURR_WEATHER_STATE(u32, u32, 1.0);
     CLEAR_WEATHER_TYPE_PERSIST;
     useOverrideRestart := (stream.ReadByte <> 0);
     if useOverrideRestart then
@@ -1474,6 +1498,44 @@ begin
           REMOVE_IPL(PChar(s));
         end;
 
+    if (v_major > 2) or (v_minor <> 0) then  // 2.0 compatibility
+      begin
+        SetLength(modelSwapRecords, integer(stream.ReadDWord));
+        for i := 0 to High(modelSwapRecords) do
+            begin
+              modelSwapRecords[i].OrigHash := stream.ReadDWord;
+              modelSwapRecords[i].NewHash := stream.ReadDWord;
+              u32 := stream.ReadDWord;
+              modelSwapRecords[i].X := pcfloat(@u32)^;
+              u32 := stream.ReadDWord;
+              modelSwapRecords[i].Y := pcfloat(@u32)^;
+              u32 := stream.ReadDWord;
+              modelSwapRecords[i].Z := pcfloat(@u32)^;
+              u32 := stream.ReadDWord;
+              modelSwapRecords[i].Radius := pcfloat(@u32)^;
+              CREATE_MODEL_SWAP(modelSwapRecords[i].X, modelSwapRecords[i].Y, modelSwapRecords[i].Z, modelSwapRecords[i].Radius, modelSwapRecords[i].OrigHash, modelSwapRecords[i].NewHash, BOOL(1));
+            end;
+        SetLength(modelHideRecords, integer(stream.ReadDWord));
+        for i := 0 to High(modelHideRecords) do
+            begin
+              modelHideRecords[i].ModelHash := stream.ReadDWord;
+              u32 := stream.ReadDWord;
+              modelHideRecords[i].X := pcfloat(@u32)^;
+              u32 := stream.ReadDWord;
+              modelHideRecords[i].Y := pcfloat(@u32)^;
+              u32 := stream.ReadDWord;
+              modelHideRecords[i].Z := pcfloat(@u32)^;
+              u32 := stream.ReadDWord;
+              modelHideRecords[i].Radius := pcfloat(@u32)^;
+              CREATE_MODEL_HIDE(modelHideRecords[i].X, modelHideRecords[i].Y, modelHideRecords[i].Z, modelHideRecords[i].Radius, modelHideRecords[i].ModelHash, BOOL(1));
+            end;
+      end
+    else
+      begin
+        SetLength(modelSwapRecords, 0);
+        SetLength(modelHideRecords, 0);
+      end;
+
     // **** PLAYER PERSISTENCE **** //
     ZeroMemory(@pdata, sizeof(TStoredPlayerData));
     LoadPlayerData(pdata, stream, v_major, v_minor);
@@ -1503,6 +1565,21 @@ begin
           storedVehicleData[i].A := pcfloat(@u32)^;
           LoadVehicleData(storedVehicleData[i].VehicleData, stream, v_major, v_minor);
         end;
+
+    if (v_major > 2) or (v_minor <> 0) then  // 2.0 compatibility
+      begin
+        for i := 0 to High(storedVehicleSlots)  do
+            begin
+              storedVehicleSlots[i].IsStored := (stream.ReadByte <> 0);
+              if storedVehicleSlots[i].IsStored then
+                LoadVehicleData(storedVehicleSlots[i].VehicleData, stream, v_major, v_minor);
+            end;
+      end
+    else
+      begin
+        for i := 0 to High(storedVehicleSlots)  do
+            storedVehicleSlots[i].IsStored := false;
+      end;
 
     // **** STATISTICS **** //
     j := integer(stream.ReadDWord);
@@ -1693,7 +1770,7 @@ begin
     stream.WriteDWord(GET_CLOCK_DAY_OF_MONTH);
     stream.WriteDWord(GET_CLOCK_MONTH);
     stream.WriteDWord(GET_CLOCK_YEAR);
-    stream.WriteDWord(_GET_CURRENT_WEATHER_TYPE);
+    stream.WriteDWord(GET_PREV_WEATHER_TYPE_HASH_NAME);
     if useOverrideRestart  then
       begin
         stream.WriteByte(1);
@@ -1726,6 +1803,25 @@ begin
     stream.WriteDWord(cint(disabledMaps.Count));
     for i := 0 to disabledMaps.Count - 1 do
         WriteCString(disabledMaps[i], stream);
+    stream.WriteDWord(cint(Length(modelSwapRecords)));
+    for i := 0 to High(modelSwapRecords) do
+        begin
+          stream.WriteDWord(modelSwapRecords[i].OrigHash);
+          stream.WriteDWord(modelSwapRecords[i].NewHash);
+          stream.WriteDWord(PUINT32(@modelSwapRecords[i].X)^);
+          stream.WriteDWord(PUINT32(@modelSwapRecords[i].Y)^);
+          stream.WriteDWord(PUINT32(@modelSwapRecords[i].Z)^);
+          stream.WriteDWord(PUINT32(@modelSwapRecords[i].Radius)^);
+        end;
+    stream.WriteDWord(cint(Length(modelHideRecords)));
+    for i := 0 to High(modelHideRecords) do
+        begin
+          stream.WriteDWord(modelHideRecords[i].ModelHash);
+          stream.WriteDWord(PUINT32(@modelHideRecords[i].X)^);
+          stream.WriteDWord(PUINT32(@modelHideRecords[i].Y)^);
+          stream.WriteDWord(PUINT32(@modelHideRecords[i].Z)^);
+          stream.WriteDWord(PUINT32(@modelHideRecords[i].Radius)^);
+        end;
 
     // **** PLAYER PERSISTENCE **** //
     ZeroMemory(@pdata, sizeof(TStoredPlayerData));
@@ -1752,6 +1848,16 @@ begin
           stream.WriteDWord(PUINT32(@storedVehicleData[i].Z)^);
           stream.WriteDWord(PUINT32(@storedVehicleData[i].A)^);
           SaveVehicleData(storedVehicleData[i].VehicleData, stream);
+        end;
+    for i := 0 to High(storedVehicleSlots) do
+        begin
+          if storedVehicleSlots[i].IsStored then
+            begin
+              stream.WriteByte(1);
+              SaveVehicleData(storedVehicleSlots[i].VehicleData, stream);
+            end
+          else
+            stream.WriteByte(0);
         end;
 
     // **** STATISTICS **** //
@@ -1812,6 +1918,15 @@ begin
         end;
   disabledMaps.Clear;
 
+  if not _is_dll_init_final_ then
+    for i := 0 to High(modelSwapRecords) do
+        REMOVE_MODEL_SWAP(modelSwapRecords[i].X, modelSwapRecords[i].Y, modelSwapRecords[i].Z, modelSwapRecords[i].Radius, modelSwapRecords[i].NewHash, modelSwapRecords[i].OrigHash, BOOL(0));
+  SetLength(modelSwapRecords, 0);
+  if not _is_dll_init_final_ then
+    for i := 0 to High(modelHideRecords) do
+        REMOVE_MODEL_HIDE(modelHideRecords[i].X, modelHideRecords[i].Y, modelHideRecords[i].Z, modelHideRecords[i].Radius, modelHideRecords[i].ModelHash, BOOL(0)); // NOTE: signature requires 'Any (int)', but params are floats
+  SetLength(modelHideRecords, 0);
+
   // Un-store player persistence data
   for i := 0 to High(storedPlayerData) do
       begin
@@ -1821,8 +1936,10 @@ begin
         SetLength(storedPlayerData[i].Data.WeaponData.WeaponList, 0);
       end;
 
-  // Un-store vehicles in garages
+  // Un-store vehicles
   SetLength(storedVehicleData, 0);
+  for i := 0 to High(storedVehicleSlots) do
+      storedVehicleSlots[i].IsStored := false;
 
   // Un-store restart locations
   SetLength(hospitalRestarts, 0);
@@ -1831,7 +1948,6 @@ begin
 
   // Reset script flags
   isOnMission := false;
-  isSavedGame := false;
   lastMission := 'NONE';
   floatEqualThreshold := 0.0001;
 

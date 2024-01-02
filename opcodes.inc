@@ -1330,7 +1330,7 @@ var
   index: integer;
 begin
    index := thread.script.GetInternalPlayerIndex;
-   if (index <> -1) then // Safe to call
+   if (index <> -1) and thread.script.storedPlayerData[index].Used then // Safe to call
      begin
        thread.script.storedPlayerData[index].Data.IsDriving := false;
        ZeroMemory(@thread.script.storedPlayerData[index].Data.VehicleData, sizeof(TStoredVehicleData));
@@ -1345,7 +1345,7 @@ var
   pos: Vector3;
 begin
    index := thread.script.GetInternalPlayerIndex;
-   if (index <> -1) then // Safe to call
+   if (index <> -1) and thread.script.storedPlayerData[index].Used then // Safe to call
      begin
        playerPed := GET_PLAYER_PED(GET_PLAYER_INDEX);
        pos := GET_ENTITY_COORDS(playerPed, BOOL(0));
@@ -1367,10 +1367,10 @@ begin
    actor := thread.GetNextParameterInt;
    {Give weapons}
    index := thread.script.GetActorInternalPlayerIndex(actor);
-   if (index <> -1) then // Safe to call
+   if (index <> -1) and thread.script.storedPlayerData[index].Used then // Safe to call
      begin
        REMOVE_ALL_PED_WEAPONS(actor, BOOL(0));
-       data := @thread.script.storedPlayerData[index].data;
+       data := @thread.script.storedPlayerData[index].Data;
        for i := 0 to High(data^.WeaponData.WeaponList) do
            begin
              REQUEST_WEAPON_ASSET(data^.WeaponData.WeaponList[i].HashCode, 31, 0);
@@ -1407,9 +1407,8 @@ var
   index: integer;
 begin
    index := thread.script.GetInternalPlayerIndex;
-   if (index <> -1) then // Safe to call
-     if thread.script.storedPlayerData[index].Used then
-       thread.script.RestorePlayer(thread.script.storedPlayerData[index].Data, GET_PLAYER_PED(GET_PLAYER_INDEX));
+   if (index <> -1) and thread.script.storedPlayerData[index].Used then // Safe to call
+     thread.script.RestorePlayer(thread.script.storedPlayerData[index].Data, GET_PLAYER_PED(GET_PLAYER_INDEX));
 end;
 
 {Add hospital restart}
@@ -1570,16 +1569,26 @@ begin
    thread.AddConditionalResult(thread.script.isOnMission, negateresult);
 end;
 
-{Get (once only), if the current game was loaded from a savegame}
+{Get (once only), if the current thread was loaded from a savegame}
 procedure scr_0056_is_saved_game_loaded(thread: TMissionThread; negateresult: boolean);
 begin
-   thread.AddConditionalResult(thread.script.isSavedGame, negateresult);
-   thread.script.isSavedGame := false;
+   thread.AddConditionalResult(thread.isSavedGame, negateresult);
+   thread.isSavedGame := false;
 end;
 
 {Show 'Save Game' screen}
 procedure scr_0057_show_save_screen(thread: TMissionThread; negateresult: boolean);
+var
+  i: integer;
 begin
+   // Refresh all threads' status
+   for i := 0 to High(thread.script.threads) do
+       begin
+         thread.script.threads[i].isSavedGame := false;
+         thread.script.threads[i].isSaveSuccessful := false;
+       end;
+
+   // Show the save screen
    GameScreen.MenuMode := gmSaveGame;
    thread.status := tstWaiting;
 end;
@@ -1928,6 +1937,7 @@ begin
         end;
 end;
 
+{Creates a static pickup}
 procedure scr_0069_create_rotated_pickup(thread: TMissionThread; negateresult: boolean);
 var
   vloc: TVariableLocation;
@@ -2306,7 +2316,7 @@ begin
        if not thread.script.globalForbiddenCubes[i].Used then
           begin
             thread.script.globalForbiddenCubes[i].Used := true;
-            thread.script.globalForbiddenCubes[i].IsCarCube := true;
+            thread.script.globalForbiddenCubes[i].CubeType := 1;
             thread.script.globalForbiddenCubes[i].X1 := x1;
             thread.script.globalForbiddenCubes[i].Y1 := y1;
             thread.script.globalForbiddenCubes[i].Z1 := z1;
@@ -2346,14 +2356,14 @@ begin
        if not thread.script.globalForbiddenCubes[i].Used then
           begin
             thread.script.globalForbiddenCubes[i].Used := true;
-            thread.script.globalForbiddenCubes[i].IsCarCube := false;
+            thread.script.globalForbiddenCubes[i].CubeType := 0;
             thread.script.globalForbiddenCubes[i].X1 := x1;
             thread.script.globalForbiddenCubes[i].Y1 := y1;
             thread.script.globalForbiddenCubes[i].Z1 := z1;
             thread.script.globalForbiddenCubes[i].X2 := x2;
             thread.script.globalForbiddenCubes[i].Y2 := y2;
             thread.script.globalForbiddenCubes[i].Z2 := z2;
-            SET_PED_PATHS_IN_AREA(x1, y1, z1, x2, y2, z2, BOOL(0));
+            SET_PED_PATHS_IN_AREA(x1, y1, z1, x2, y2, z2, BOOL(0), 0);
             thread.SetVarData(vloc, svtForbiddenCube, vid, PUINT32(@i)^);
             break;
           end;
@@ -2562,9 +2572,328 @@ begin
         end;
 end;
 
+{Get (once only), if the current thread has been recently saved}
+procedure scr_0080_has_game_been_saved(thread: TMissionThread; negateresult: boolean);
+begin
+   thread.AddConditionalResult(thread.isSaveSuccessful, negateresult);
+   thread.isSaveSuccessful := false;
+end;
+
+{Perform a Wasted-Busted return, if possible}
+procedure scr_0081_perform_wasted_busted_return(thread: TMissionThread; negateresult: boolean);
+begin
+   if thread.wbGosubActive then
+     begin
+       thread.wbGosubActive := false;
+       thread.gosubLevel := thread.wbGosubLevel;
+       thread.position := thread.wbGosubReturn;
+       thread.waitTime := 0;
+     end;
+end;
+
+{Create a forbidden for scenarios cube}
+procedure scr_0082_create_forbidden_for_scenarios_cube(thread: TMissionThread; negateresult: boolean);
+var
+  vloc: TVariableLocation;
+  vid: word;
+  x1, y1, z1, x2, y2, z2: cfloat;
+  i: cint;
+begin
+   {Param: 'result'}
+   thread.GetVarId(vloc, vid);
+   thread.ClearVariable(vloc, vid);
+   {Param: 'x1'}
+   x1 := thread.GetNextParameterFloat;
+   {Param: 'y1'}
+   y1 := thread.GetNextParameterFloat;
+   {Param: 'z1'}
+   z1 := thread.GetNextParameterFloat;
+   {Param: 'x2'}
+   x2 := thread.GetNextParameterFloat;
+   {Param: 'y2'}
+   y2 := thread.GetNextParameterFloat;
+   {Param: 'z2'}
+   z2 := thread.GetNextParameterFloat;
+   {Save result and apply gameplay effect}
+   for i := 0 to High(thread.script.globalForbiddenCubes) do
+       if not thread.script.globalForbiddenCubes[i].Used then
+          begin
+            thread.script.globalForbiddenCubes[i].Used := true;
+            thread.script.globalForbiddenCubes[i].CubeType := 0;
+            thread.script.globalForbiddenCubes[i].X1 := x1;
+            thread.script.globalForbiddenCubes[i].Y1 := y1;
+            thread.script.globalForbiddenCubes[i].Z1 := z1;
+            thread.script.globalForbiddenCubes[i].X2 := x2;
+            thread.script.globalForbiddenCubes[i].Y2 := y2;
+            thread.script.globalForbiddenCubes[i].Z2 := z2;
+            thread.script.globalForbiddenCubes[i]._handle := ADD_SCENARIO_BLOCKING_AREA(X1, Y1, Z1, X2, Y2, Z2, BOOL(0), BOOL(1), BOOL(1), BOOL(1), 1);
+            thread.SetVarData(vloc, svtForbiddenCube, vid, PUINT32(@i)^);
+            break;
+          end;
+end;
+
+{Swaps map models in an area}
+procedure scr_0083_swap_map_models_in_area(thread: TMissionThread; negateresult: boolean);
+var
+  x, y, z, radius: cfloat;
+  oldHash, newHash: Hash;
+  i, found: integer;
+begin
+   {Param: 'x'}
+   x := thread.GetNextParameterFloat;
+   {Param: 'y'}
+   y := thread.GetNextParameterFloat;
+   {Param: 'z'}
+   z := thread.GetNextParameterFloat;
+   {Param: 'radius'}
+   radius := thread.GetNextParameterFloat;
+   {Param: 'orig_hash'}
+   oldHash := thread.GetNextParameterInt;
+   {Param: 'new_hash'}
+   newHash := thread.GetNextParameterInt;
+   {Replace models}
+   found := -1;
+   for i := 0 to High(thread.script.modelSwapRecords) do
+      begin
+        if (thread.script.modelSwapRecords[i].OrigHash = oldHash) and (thread.script.modelSwapRecords[i].NewHash = newHash) then
+          begin
+            if (VDIST(x, y, z, thread.script.modelSwapRecords[i].X, thread.script.modelSwapRecords[i].Y, thread.script.modelSwapRecords[i].Z) < radius) then
+              begin
+                found := i;
+                break; // Found an already active model swap in the vicinity
+              end;
+          end;
+      end;
+   if (found < 0) then
+     begin
+       SetLength(thread.script.modelSwapRecords, Length(thread.script.modelSwapRecords) + 1);
+       thread.script.modelSwapRecords[High(thread.script.modelSwapRecords)].X := x;
+       thread.script.modelSwapRecords[High(thread.script.modelSwapRecords)].Y := y;
+       thread.script.modelSwapRecords[High(thread.script.modelSwapRecords)].Z := z;
+       thread.script.modelSwapRecords[High(thread.script.modelSwapRecords)].Radius := radius;
+       thread.script.modelSwapRecords[High(thread.script.modelSwapRecords)].OrigHash := oldHash;
+       thread.script.modelSwapRecords[High(thread.script.modelSwapRecords)].NewHash := newHash;
+       CREATE_MODEL_SWAP(x, y, z, radius, oldHash, newHash, BOOL(1));
+     end;
+end;
+
+{Restores swapped map models in an area}
+procedure scr_0084_restore_map_models_in_area(thread: TMissionThread; negateresult: boolean);
+var
+  x, y, z, radius: cfloat;
+  oldHash, currHash: Hash;
+  i, j: integer;
+begin
+   {Param: 'x'}
+   x := thread.GetNextParameterFloat;
+   {Param: 'y'}
+   y := thread.GetNextParameterFloat;
+   {Param: 'z'}
+   z := thread.GetNextParameterFloat;
+   {Param: 'radius'}
+   radius := thread.GetNextParameterFloat;
+   {Param: 'orig_hash'}
+   oldHash := thread.GetNextParameterInt;
+   {Param: 'current_hash'}
+   currHash := thread.GetNextParameterInt;
+   {Restore models}
+   for i := 0 to High(thread.script.modelSwapRecords) do
+      begin
+        if (thread.script.modelSwapRecords[i].OrigHash = oldHash) and (thread.script.modelSwapRecords[i].NewHash = currHash) then
+          begin
+            if (VDIST(x, y, z, thread.script.modelSwapRecords[i].X, thread.script.modelSwapRecords[i].Y, thread.script.modelSwapRecords[i].Z) < radius) then
+              begin
+                REMOVE_MODEL_SWAP(x, y, z, radius, currHash, oldHash, BOOL(0));
+                for j := i + 1 to High(thread.script.modelSwapRecords) do
+                    thread.script.modelSwapRecords[i] := thread.script.modelSwapRecords[i + 1];
+                SetLength(thread.script.modelSwapRecords, Length(thread.script.modelSwapRecords) - 1);
+              end;
+          end;
+      end;
+end;
+
+{Disables map models in an area}
+procedure scr_0085_disable_map_models_in_area(thread: TMissionThread; negateresult: boolean);
+var
+  x, y, z, radius: cfloat;
+  modelHash: Hash;
+  i, found: integer;
+begin
+   {Param: 'x'}
+   x := thread.GetNextParameterFloat;
+   {Param: 'y'}
+   y := thread.GetNextParameterFloat;
+   {Param: 'z'}
+   z := thread.GetNextParameterFloat;
+   {Param: 'radius'}
+   radius := thread.GetNextParameterFloat;
+   {Param: 'model_hash'}
+   modelHash := thread.GetNextParameterInt;
+   {Disable models}
+   found := -1;
+   for i := 0 to High(thread.script.modelHideRecords) do
+      if (thread.script.modelHideRecords[i].ModelHash = modelHash) and (VDIST(x, y, z, thread.script.modelHideRecords[i].X, thread.script.modelHideRecords[i].Y, thread.script.modelHideRecords[i].Z) < radius) then
+        begin
+          found := i;
+          break; // Found an already active model hide in the vicinity
+        end;
+   if (found < 0) then
+     begin
+       SetLength(thread.script.modelHideRecords, Length(thread.script.modelHideRecords) + 1);
+       thread.script.modelHideRecords[High(thread.script.modelHideRecords)].X := x;
+       thread.script.modelHideRecords[High(thread.script.modelHideRecords)].Y := y;
+       thread.script.modelHideRecords[High(thread.script.modelHideRecords)].Z := z;
+       thread.script.modelHideRecords[High(thread.script.modelHideRecords)].Radius := radius;
+       thread.script.modelHideRecords[High(thread.script.modelHideRecords)].ModelHash := modelHash;
+       CREATE_MODEL_HIDE(x, y, z, radius, modelHash, BOOL(1));
+     end;
+end;
+
+{Reenables map models in an area}
+procedure scr_0086_reenable_map_models_in_area(thread: TMissionThread; negateresult: boolean);
+var
+  x, y, z, radius: cfloat;
+  modelHash: Hash;
+  i, j: integer;
+begin
+   {Param: 'x'}
+   x := thread.GetNextParameterFloat;
+   {Param: 'y'}
+   y := thread.GetNextParameterFloat;
+   {Param: 'z'}
+   z := thread.GetNextParameterFloat;
+   {Param: 'radius'}
+   radius := thread.GetNextParameterFloat;
+   {Param: 'model_hash'}
+   modelHash := thread.GetNextParameterInt;
+   {Reenable models}
+   for i := 0 to High(thread.script.modelHideRecords) do
+      if (thread.script.modelHideRecords[i].ModelHash = modelHash) and (VDIST(x, y, z, thread.script.modelHideRecords[i].X, thread.script.modelHideRecords[i].Y, thread.script.modelHideRecords[i].Z) < radius) then
+        begin
+          REMOVE_MODEL_HIDE(x, y, z, radius, modelHash, BOOL(0)); // NOTE: signature requires 'Any (int)', but params are floats
+          for j := i + 1 to High(thread.script.modelHideRecords) do
+             thread.script.modelHideRecords[i] := thread.script.modelHideRecords[i + 1];
+          SetLength(thread.script.modelHideRecords, Length(thread.script.modelHideRecords) - 1);
+        end;
+end;
+
+{Stores a single vehicle in the specified slot}
+procedure scr_0087_store_single_vehicle(thread: TMissionThread; negateresult: boolean);
+var
+  veh: Vehicle;
+  slot: cint;
+begin
+   {Param: 'vehicle'}
+   veh := thread.GetNextParameterInt;
+   {Param: 'slot'}
+   slot := thread.GetNextParameterInt;
+   {Store vehicle}
+   if (slot >= 0) and (slot < Length(thread.script.storedVehicleSlots)) and (GET_ENTITY_TYPE(veh) = 2) then
+     begin
+       thread.script.storedVehicleSlots[slot].IsStored := true;
+       thread.script.StoreVehicle(thread.script.storedVehicleSlots[slot].VehicleData, veh);
+     end;
+end;
+
+{Restores a single vehicle in the specified slot}
+procedure scr_0088_spawn_single_vehicle(thread: TMissionThread; negateresult: boolean);
+var
+  vloc: TVariableLocation;
+  vid: word;
+  slot: cint;
+  x, y, z, a: cfloat;
+  data: TVehiclePersistenceData;
+  veh: Vehicle;
+begin
+   {Param: 'result'}
+   thread.GetVarId(vloc, vid);
+   thread.ClearVariable(vloc, vid);
+   {Param: 'slot'}
+   slot := thread.GetNextParameterInt;
+   {Param: 'x'}
+   x := thread.GetNextParameterFloat;
+   {Param: 'y'}
+   y := thread.GetNextParameterFloat;
+   {Param: 'z'}
+   z := thread.GetNextParameterFloat;
+   {Param: 'a'}
+   a := thread.GetNextParameterFloat;
+   {Store vehicle}
+   if (slot >= 0) and (slot < Length(thread.script.storedVehicleSlots)) and thread.script.storedVehicleSlots[slot].IsStored then
+     begin
+       data.VehicleData := thread.script.storedVehicleSlots[slot].VehicleData;
+       data.X := x;
+       data.Y := y;
+       data.Z := z;
+       data.A := a;
+       veh := thread.script.RestoreVehicle(data);
+       thread.SetVarInt(vloc, vid, veh);
+     end;
+end;
+
+{Forgets a single vehicle in the specified slot}
+procedure scr_0089_forget_single_vehicle(thread: TMissionThread; negateresult: boolean);
+var
+  slot: cint;
+begin
+   {Param: 'slot'}
+   slot := thread.GetNextParameterInt;
+   {Forget vehicle}
+   if (slot >= 0) and (slot < Length(thread.script.storedVehicleSlots)) then
+     thread.script.storedVehicleSlots[slot].IsStored := false;
+end;
+
+{Returns, if the specified slot has a single vehicle stored in}
+procedure scr_008A_is_single_vehicle_stored(thread: TMissionThread; negateresult: boolean);
+var
+  slot: cint;
+begin
+   {Param: 'slot'}
+   slot := thread.GetNextParameterInt;
+   {Forget vehicle}
+   if (slot >= 0) and (slot < Length(thread.script.storedVehicleSlots)) then
+     thread.AddConditionalResult(thread.script.storedVehicleSlots[slot].IsStored, negateresult)
+   else
+     thread.AddConditionalResult(false, negateresult);
+end;
+
+
+{Changes the specified ped's outfit (with a valid player model)}
+procedure scr_008B_dress_up_ped_as_protagonist(thread: TMissionThread; negateresult: boolean);
+var
+  actor: Ped;
+  index, i, j: integer;
+  data: ^TStoredPlayerData;
+begin
+   {Param: 'actor'}
+   actor := thread.GetNextParameterInt;
+   {Dress up ped}
+   index := thread.script.GetActorInternalPlayerIndex(actor);
+   if (index <> -1) and thread.script.storedPlayerData[index].Used then // Safe to call
+     begin
+      data := @thread.script.storedPlayerData[index].Data;
+      for i := 0 to 11 do
+          if (i <> 7) then // Drawable 7 is unused!
+            SET_PED_COMPONENT_VARIATION(actor, cint(i), data^.OutfitData.Drawables[i].DrawableVar, data^.OutfitData.Drawables[i].TextureVar, data^.OutfitData.Drawables[i].PaletteVar);
+      for i := 0 to 2 do
+         SET_PED_PROP_INDEX(actor, cint(i), data^.OutfitData.Props[i].PropIndex, data^.OutfitData.Props[i].PropTexture, BOOL(0), 1);
+     end;
+end;
+
+{Get GTA5 native result as conditional}
+procedure scr_008C_get_native_result_conditional(thread: TMissionThread; negateresult: boolean);
+var
+  result: BOOL;
+begin
+   {Important! Save result first!}
+   result := PBOOL(thread.nativeCallResult)^;
+   {Save result}
+   thread.AddConditionalResult(result <> BOOL(0), negateresult);
+end;
+
 {OpCode handler table}
 var
-  OpCodes: array [$0000..$007F] of TOpCodeHandler =
+  OpCodes: array [$0000..$008C] of TOpCodeHandler =
     (
      @scr_0000_nop,
      @scr_0001_wait,
@@ -2693,6 +3022,19 @@ var
      @scr_007C_set_car_generator_active,
      @scr_007D_store_cars_from_angled_cube,
      @scr_007E_spawn_stored_cars_in_angled_cube,
-     @scr_007F_forget_stored_cars_in_angled_cube
+     @scr_007F_forget_stored_cars_in_angled_cube,
+     @scr_0080_has_game_been_saved,
+     @scr_0081_perform_wasted_busted_return,
+     @scr_0082_create_forbidden_for_scenarios_cube,
+     @scr_0083_swap_map_models_in_area,
+     @scr_0084_restore_map_models_in_area,
+     @scr_0085_disable_map_models_in_area,
+     @scr_0086_reenable_map_models_in_area,
+     @scr_0087_store_single_vehicle,
+     @scr_0088_spawn_single_vehicle,
+     @scr_0089_forget_single_vehicle,
+     @scr_008A_is_single_vehicle_stored,
+     @scr_008B_dress_up_ped_as_protagonist,
+     @scr_008C_get_native_result_conditional
     );
 

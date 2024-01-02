@@ -133,7 +133,7 @@ begin
   for i := 0 to High(GameTextMapping) do
       if (id = GameTextMapping[i].InternalTextId) then
          begin
-           Result := strpas(_GET_LABEL_TEXT(PChar(GameTextMapping[i].GTATextId)));
+           Result := strpas(GET_FILENAME_FOR_AUDIO_CONVERSATION(PChar(GameTextMapping[i].GTATextId)));
            break;
          end;
 end;
@@ -254,9 +254,9 @@ var
 
 procedure PushMapNotification(msg: string);
 begin
-  _SET_NOTIFICATION_TEXT_ENTRY('STRING');
+  BEGIN_TEXT_COMMAND_THEFEED_POST('STRING');
   ADD_TEXT_COMPONENT_SUBSTRING_PLAYER_NAME(PChar(msg));
-  _DRAW_NOTIFICATION(BOOL(0), BOOL(0));
+  END_TEXT_COMMAND_THEFEED_POST_TICKER(BOOL(0), BOOL(0));
 end;
 
 procedure DrawCustomTexture(filename: string; index, level, _time: integer; sizeX, sizeY, centerX, centerY, posX, posY, rotation, factor: real; r, g, b, a: byte);
@@ -351,36 +351,36 @@ begin
   while (HAS_SCALEFORM_MOVIE_LOADED(buttonsMovie) = BOOL(0)) do
         ScriptHookVWait(0);
 
-  _PUSH_SCALEFORM_MOVIE_FUNCTION(buttonsMovie, PChar('CLEAR_ALL'));
-  _POP_SCALEFORM_MOVIE_FUNCTION_VOID;
+  BEGIN_SCALEFORM_MOVIE_METHOD(buttonsMovie, PChar('CLEAR_ALL'));
+  END_SCALEFORM_MOVIE_METHOD;
 
-  _PUSH_SCALEFORM_MOVIE_FUNCTION(buttonsMovie, PChar('SET_CLEAR_SPACE'));
-  _PUSH_SCALEFORM_MOVIE_FUNCTION_PARAMETER_INT(200);
-  _POP_SCALEFORM_MOVIE_FUNCTION_VOID;
+  BEGIN_SCALEFORM_MOVIE_METHOD(buttonsMovie, PChar('SET_CLEAR_SPACE'));
+  SCALEFORM_MOVIE_METHOD_ADD_PARAM_INT(200);
+  END_SCALEFORM_MOVIE_METHOD;
 
   for i := 0 to High(MenuKeyActions) do
       begin
-        _PUSH_SCALEFORM_MOVIE_FUNCTION(buttonsMovie, PChar('SET_DATA_SLOT'));
-        _PUSH_SCALEFORM_MOVIE_FUNCTION_PARAMETER_INT(i);
-        _0xE83A3E3557A56640(_GET_CONTROL_ACTION_NAME(0, MenuKeyActions[i].ButtonId, BOOL(1)));
-        _BEGIN_TEXT_COMPONENT(PChar('STRING'));
+        BEGIN_SCALEFORM_MOVIE_METHOD(buttonsMovie, PChar('SET_DATA_SLOT'));
+        SCALEFORM_MOVIE_METHOD_ADD_PARAM_INT(cint(i));
+        SCALEFORM_MOVIE_METHOD_ADD_PARAM_PLAYER_NAME_STRING(GET_CONTROL_INSTRUCTIONAL_BUTTONS_STRING(0, MenuKeyActions[i].ButtonId, BOOL(1)));
+        BEGIN_TEXT_COMMAND_SCALEFORM_STRING(PChar('STRING'));
         if (MenuKeyActions[i].ButtonTextId  <> '') then
-           _0x5F68520888E69014(PChar(GetGameTitle(MenuKeyActions[i].ButtonTextId)))
+           ADD_TEXT_COMPONENT_SUBSTRING_KEYBOARD_DISPLAY(PChar(GetGameTitle(MenuKeyActions[i].ButtonTextId)))
         else
-           _0x5F68520888E69014(nil);
-        _END_TEXT_COMPONENT;
-        _POP_SCALEFORM_MOVIE_FUNCTION_VOID;
+           ADD_TEXT_COMPONENT_SUBSTRING_KEYBOARD_DISPLAY(nil);
+        END_TEXT_COMMAND_SCALEFORM_STRING;
+        END_SCALEFORM_MOVIE_METHOD;
       end;
 
-  _PUSH_SCALEFORM_MOVIE_FUNCTION(buttonsMovie, PChar('DRAW_INSTRUCTIONAL_BUTTONS'));
-  _POP_SCALEFORM_MOVIE_FUNCTION_VOID;
+  BEGIN_SCALEFORM_MOVIE_METHOD(buttonsMovie, PChar('DRAW_INSTRUCTIONAL_BUTTONS'));
+  END_SCALEFORM_MOVIE_METHOD;
 
-  _PUSH_SCALEFORM_MOVIE_FUNCTION(buttonsMovie, PChar('SET_BACKGROUND_COLOR'));
-  _PUSH_SCALEFORM_MOVIE_FUNCTION_PARAMETER_INT(cint(MenuColors[clrDisabledSelBg].R));
-  _PUSH_SCALEFORM_MOVIE_FUNCTION_PARAMETER_INT(cint(MenuColors[clrDisabledSelBg].G));
-  _PUSH_SCALEFORM_MOVIE_FUNCTION_PARAMETER_INT(cint(MenuColors[clrDisabledSelBg].R));
-  _PUSH_SCALEFORM_MOVIE_FUNCTION_PARAMETER_INT(cint(MenuColors[clrDisabledSelBg].A));
-  _POP_SCALEFORM_MOVIE_FUNCTION_VOID;
+  BEGIN_SCALEFORM_MOVIE_METHOD(buttonsMovie, PChar('SET_BACKGROUND_COLOR'));
+  SCALEFORM_MOVIE_METHOD_ADD_PARAM_INT(cint(MenuColors[clrDisabledSelBg].R));
+  SCALEFORM_MOVIE_METHOD_ADD_PARAM_INT(cint(MenuColors[clrDisabledSelBg].G));
+  SCALEFORM_MOVIE_METHOD_ADD_PARAM_INT(cint(MenuColors[clrDisabledSelBg].R));
+  SCALEFORM_MOVIE_METHOD_ADD_PARAM_INT(cint(MenuColors[clrDisabledSelBg].A));
+  END_SCALEFORM_MOVIE_METHOD;
 end;
 
 procedure TGameScreen.SetMenu(menu: TMenuType);
@@ -411,27 +411,27 @@ procedure TGameScreen.DrawLoadingScreen;
 begin
   if (currentMenu = gmLoadingScreen) then
      begin
-       DRAW_RECT(0.5, 0.5, 1.0, 1.0, cint(MenuColors[clrDisabledSelBg].R), cint(MenuColors[clrDisabledSelBg].G), cint(MenuColors[clrDisabledSelBg].B), 255);
+       DRAW_RECT(0.5, 0.5, 1.0, 1.0, cint(MenuColors[clrDisabledSelBg].R), cint(MenuColors[clrDisabledSelBg].G), cint(MenuColors[clrDisabledSelBg].B), 255, BOOL(0));
        SET_TEXT_FONT(1);
        SET_TEXT_SCALE(0.0, 1.5);
        SET_TEXT_CENTRE(BOOL(0));
        SET_TEXT_COLOUR(cint(MenuColors[clrTitle].R), cint(MenuColors[clrTitle].G), cint(MenuColors[clrTitle].B), cint(MenuColors[clrTitle].A));
        SET_TEXT_DROPSHADOW(4, 0, 0, 0, 255);
-       _SET_TEXT_ENTRY(PChar('STRING'));
+       BEGIN_TEXT_COMMAND_DISPLAY_TEXT(PChar('STRING'));
        ADD_TEXT_COMPONENT_SUBSTRING_PLAYER_NAME(PChar(GetGameTitle('Ld_FullScr')));
-        _DRAW_TEXT(0.05, 0.05);
+       END_TEXT_COMMAND_DISPLAY_TEXT(0.05, 0.05, 0);
      end
   else
      begin
-       DRAW_RECT(0.5, 0.5, 0.5, 0.25, cint(MenuColors[clrDisabledSelBg].R), cint(MenuColors[clrDisabledSelBg].G), cint(MenuColors[clrDisabledSelBg].B), 192);
+       DRAW_RECT(0.5, 0.5, 0.5, 0.25, cint(MenuColors[clrDisabledSelBg].R), cint(MenuColors[clrDisabledSelBg].G), cint(MenuColors[clrDisabledSelBg].B), 192, BOOL(0));
        SET_TEXT_FONT(1);
        SET_TEXT_SCALE(0.0, 1.5);
        SET_TEXT_CENTRE(BOOL(1));
        SET_TEXT_COLOUR(cint(MenuColors[clrTitle].R), cint(MenuColors[clrTitle].G), cint(MenuColors[clrTitle].B), cint(MenuColors[clrTitle].A));
        SET_TEXT_DROPSHADOW(4, 0, 0, 0, 255);
-       _SET_TEXT_ENTRY(PChar('STRING'));
+       BEGIN_TEXT_COMMAND_DISPLAY_TEXT(PChar('STRING'));
        ADD_TEXT_COMPONENT_SUBSTRING_PLAYER_NAME(PChar(GetGameTitle('Ld_MicroScr')));
-       _DRAW_TEXT(0.5, 0.5);
+       END_TEXT_COMMAND_DISPLAY_TEXT(0.5, 0.5, 0);
      end;
 end;
 
@@ -526,7 +526,7 @@ begin
             itemIndex := 0;
           end;
        DISABLE_ALL_CONTROL_ACTIONS(0);
-       _SHOW_CURSOR_THIS_FRAME;
+       SET_MOUSE_CURSOR_THIS_FRAME;
 
        // Check, if any key has been pressed
        for i := 0 to High(MenuKeyActions) do
@@ -631,8 +631,8 @@ begin
                  else GET_HUD_COLOUR(28, @r, @g, @b, @a); // Net Player 1 ???
             end;
             if not gameStarted then
-               DRAW_RECT(0.5, 0.5, 1.0, 1.0, 0, 0, 0, 255); // Game not yet started? Hide the vanilla Prologue story remains behind a black backrop...
-            DRAW_RECT(0.5, 0.5, 1.0, 1.0, r, g, b, 128);
+               DRAW_RECT(0.5, 0.5, 1.0, 1.0, 0, 0, 0, 255, BOOL(0)); // Game not yet started? Hide the vanilla Prologue story remains behind a black backrop...
+            DRAW_RECT(0.5, 0.5, 1.0, 1.0, r, g, b, 128, BOOL(0));
             // Items
             for i := 0 to High(MenuItems) do
                 if (MenuItems[i].ItemType = mitTitle) then
@@ -642,12 +642,12 @@ begin
                      SET_TEXT_CENTRE(BOOL(0));
                      SET_TEXT_COLOUR(cint(MenuColors[clrTitle].R), cint(MenuColors[clrTitle].G), cint(MenuColors[clrTitle].B), cint(MenuColors[clrTitle].A));
                      SET_TEXT_DROPSHADOW(4, 0, 0, 0, 255);
-                     _SET_TEXT_ENTRY(PChar('STRING'));
+                     BEGIN_TEXT_COMMAND_DISPLAY_TEXT(PChar('STRING'));
                      if (currentMenu = gmLoadGame) then
                         ADD_TEXT_COMPONENT_SUBSTRING_PLAYER_NAME(PChar(GetGameTitle('LoadGameTitle')))
                      else
                         ADD_TEXT_COMPONENT_SUBSTRING_PLAYER_NAME(PChar(GetGameTitle('SaveGameTitle')));
-                     _DRAW_TEXT(MenuItems[High(MenuItems)].L, MenuItems[High(MenuItems)].T);
+                     END_TEXT_COMMAND_DISPLAY_TEXT(MenuItems[High(MenuItems)].L, MenuItems[High(MenuItems)].T, 0);
                    end
                 else if IsButtonReactive(MenuItems[i]) then
                    begin
@@ -685,7 +685,7 @@ begin
                              itemText := GetGameTitle(MenuItems[i].ItemText);
                         end;
                      // Draw the item
-                     DRAW_RECT(MenuItems[i].L, MenuItems[i].T, MenuItems[i].W, MenuItems[i].H, itemBgColor.R, itemBgColor.G, itemBgColor.B, itemBgColor.A);
+                     DRAW_RECT(MenuItems[i].L, MenuItems[i].T, MenuItems[i].W, MenuItems[i].H, itemBgColor.R, itemBgColor.G, itemBgColor.B, itemBgColor.A, BOOL(0));
                      SET_TEXT_FONT(0);
                      SET_TEXT_SCALE(0.0, 0.4);
                      if (MenuItems[i].ItemType = mitGameSlot) then
@@ -694,15 +694,15 @@ begin
                         SET_TEXT_CENTRE(BOOL(1));
                      SET_TEXT_COLOUR(itemTextColor.R, itemTextColor.G, itemTextColor.B, itemTextColor.A);
                      SET_TEXT_DROPSHADOW(0, 0, 0, 0, 0);
-                     _SET_TEXT_ENTRY(PChar('STRING'));
+                     BEGIN_TEXT_COMMAND_DISPLAY_TEXT(PChar('STRING'));
                      ADD_TEXT_COMPONENT_SUBSTRING_PLAYER_NAME(PChar(itemText));
                      if (MenuItems[i].ItemType = mitGameSlot) then
-                        _DRAW_TEXT(MenuItems[i].L - (MenuItems[i].W / 2), MenuItems[i].T - (MenuItems[i].H / 2))
+                        END_TEXT_COMMAND_DISPLAY_TEXT(MenuItems[i].L - (MenuItems[i].W / 2), MenuItems[i].T - (MenuItems[i].H / 2), 0)
                      else
-                        _DRAW_TEXT(MenuItems[i].L, MenuItems[i].T - (MenuItems[i].H / 2));
+                        END_TEXT_COMMAND_DISPLAY_TEXT(MenuItems[i].L, MenuItems[i].T - (MenuItems[i].H / 2), 0);
                    end;
             // Instructional buttons movie
-            DRAW_SCALEFORM_MOVIE_FULLSCREEN(buttonsMovie, 255, 255, 255, 255, BOOL(0));
+            DRAW_SCALEFORM_MOVIE_FULLSCREEN(buttonsMovie, 255, 255, 255, 255, 0);
           end
        // If the menu was changed, we hide the menu, and restore game state
        else if Result and visible then

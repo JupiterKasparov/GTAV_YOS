@@ -31,11 +31,12 @@ begin
   SET_RANDOM_EVENT_FLAG(BOOL(0));
   for i := 0 to DisabledScriptList.Count - 1 do
       begin
-        SET_SCRIPT_AS_NO_LONGER_NEEDED(PChar(DisabledScriptList[i]));
+        FORCE_CLEANUP_FOR_ALL_THREADS_WITH_THIS_NAME(PChar(DisabledScriptList[i]), 1);
         TERMINATE_ALL_SCRIPTS_WITH_THIS_NAME(PChar(DisabledScriptList[i]));
         h := GET_HASH_KEY(PChar(DisabledScriptList[i]));
-        if (_HAS_STREAMED_SCRIPT_LOADED(h) <> BOOL(0)) then
-           _SET_STREAMED_SCRIPT_AS_NO_LONGER_NEEDED(h);
+        if (HAS_SCRIPT_WITH_NAME_HASH_LOADED(h) <> BOOL(0)) then
+           SET_SCRIPT_WITH_NAME_HASH_AS_NO_LONGER_NEEDED(h);
+        SET_SCRIPT_AS_NO_LONGER_NEEDED(PChar(DisabledScriptList[i]));
       end;
 end;
 
@@ -51,8 +52,8 @@ begin
 
   // Specifically closes North Yankton
   SET_ZONE_ENABLED(GET_ZONE_FROM_NAME_ID(PChar('PrLog')), BOOL(0));
-  _0xAF12610C644A35C9(PChar('Prologue_Main'), BOOL(0)); // SET_MAPDATACULLBOX_ENABLED
-  _0xAF12610C644A35C9(PChar('prologue'), BOOL(0)); // SET_MAPDATACULLBOX_ENABLED
+  SET_MAPDATACULLBOX_ENABLED(PChar('Prologue_Main'), BOOL(0));
+  SET_MAPDATACULLBOX_ENABLED(PChar('prologue'), BOOL(0));
 
   // Removes Disabled maps (by default, only North Yankton)
   for i := 0 to DisabledMapList.Count - 1 do
@@ -61,19 +62,19 @@ begin
   // Activate OUTSIDE interior
   SET_INTERIOR_ACTIVE(0, BOOL(1));
   REFRESH_INTERIOR(0);
-  _SET_MINIMAP_VISIBLE(BOOL(0));
+  SET_MINIMAP_IN_PROLOGUE(BOOL(0));
   UNLOCK_MINIMAP_ANGLE;
   UNLOCK_MINIMAP_POSITION;
 
   // Expand world limits to an uniform, large value
-  _0x5006D96C995A5827(12500.0, 12500.0, 30.0); // EXTEND_WORLD_BOUNDARY_FOR_PLAYER
-  _0x5006D96C995A5827(-12500.0, -12500.0, 30.0); // EXTEND_WORLD_BOUNDARY_FOR_PLAYER
+  EXTEND_WORLD_BOUNDARY_FOR_PLAYER(12500.0, 12500.0, 30.0);
+  EXTEND_WORLD_BOUNDARY_FOR_PLAYER(-12500.0, -12500.0, 30.0);
 
   // Reset weather and datetime
   CLEAR_TIMECYCLE_MODIFIER;
   CLEAR_WEATHER_TYPE_PERSIST;
   SET_WEATHER_TYPE_NOW(PChar('EXTRASUNNY'));
-  _CLEAR_CLOUD_HAT;
+  UNLOAD_ALL_CLOUD_HATS;
   CLEAR_WEATHER_TYPE_PERSIST;
   SET_CLOCK_DATE(2013, 07, 31);
   SET_CLOCK_TIME(07, 30, 0);
@@ -84,6 +85,10 @@ begin
   for i := 0 to AudioFlagList.Count - 1 do
       SET_AUDIO_FLAG(PChar(AudioFlagList[i]), BOOL(0));
   SET_CREATE_RANDOM_COPS(BOOL(1));
+  SET_CREATE_RANDOM_COPS_NOT_ON_SCENARIOS(BOOL(1));
+  SET_CREATE_RANDOM_COPS_ON_SCENARIOS(BOOL(1));
+  SET_RANDOM_BOATS(BOOL(1));
+  SET_GARBAGE_TRUCKS(BOOL(1));
   for i := 1 to 15 do
       ENABLE_DISPATCH_SERVICE(cint(i), BOOL(1));
   SET_ALL_VEHICLE_GENERATORS_ACTIVE;
@@ -95,16 +100,16 @@ begin
   DELETE_ALL_TRAINS;
   REMOVE_ALL_COVER_BLOCKING_AREAS;
   REMOVE_SCENARIO_BLOCKING_AREAS;
-  SET_ROADS_IN_AREA(-12500.0, -12500.0, -200.0, 12500.0, 12500.0, 5000.0, BOOL(1), BOOL(1));
-  SET_PED_PATHS_IN_AREA(-12500.0, -12500.0, -200.0, 12500.0, 12500.0, 5000.0, BOOL(1));
-  _0xE6DE0561D9232A64; // CLEAR_GPS_CUSTOM_ROUTE
+  SET_ROADS_BACK_TO_ORIGINAL(-12500.0, -12500.0, -200.0, 12500.0, 12500.0, 5000.0, 1);
+  SET_PED_PATHS_BACK_TO_ORIGINAL(-12500.0, -12500.0, -200.0, 12500.0, 12500.0, 5000.0, 1);
+  CLEAR_GPS_CUSTOM_ROUTE;
   CLEAR_GPS_PLAYER_WAYPOINT;
-  _0xD8E694757BCEA8E9; // _DELETE_WAYPOINT
+  DELETE_WAYPOINTS_FROM_THIS_PLAYER;
 
   CLEAR_AREA_OF_PEDS(0.0, 0.0, 0.0, 25000.0, 1);
-  CLEAR_AREA_OF_VEHICLES(0.0, 0.0, 0.0, 25000.0, BOOL(0), BOOL(0), BOOL(0), BOOL(0), BOOL(0));
+  CLEAR_AREA_OF_VEHICLES(0.0, 0.0, 0.0, 25000.0, BOOL(0), BOOL(0), BOOL(0), BOOL(0), BOOL(0), BOOL(0), 0);
   CLEAR_AREA(0.0, 0.0, 0.0, 25000.0, BOOL(1), BOOL(0), BOOL(0), BOOL(0));
-  _0xD79185689F8FD5DF(BOOL(0)); // SET_STUNT_JUMPS_CAN_TRIGGER
+  SET_STUNT_JUMPS_CAN_TRIGGER(BOOL(0));
 
   worldObjectCount := worldGetAllPickups(pcint(worldObjectData), Length(worldObjectData));
   for i := 0 to worldObjectCount - 1 do
@@ -139,9 +144,9 @@ begin
   plyr := GET_PLAYER_INDEX;
 
   // Unlock special abilities for players
-  SPECIAL_ABILITY_UNLOCK(GET_HASH_KEY(PChar('player_zero')));
-  SPECIAL_ABILITY_UNLOCK(GET_HASH_KEY(PChar('player_one')));
-  SPECIAL_ABILITY_UNLOCK(GET_HASH_KEY(PChar('player_two')));
+  SPECIAL_ABILITY_UNLOCK(GET_HASH_KEY(PChar('player_zero')), 0);
+  SPECIAL_ABILITY_UNLOCK(GET_HASH_KEY(PChar('player_one')), 0);
+  SPECIAL_ABILITY_UNLOCK(GET_HASH_KEY(PChar('player_two')), 0);
 
   // Reset wanted level
   SET_MAX_WANTED_LEVEL(5);
@@ -167,11 +172,11 @@ begin
   SET_MODEL_AS_NO_LONGER_NEEDED(h);
 
   // Reset player flags
-  SPECIAL_ABILITY_RESET(plyr);
-  ENABLE_SPECIAL_ABILITY(plyr, BOOL(1));
+  SPECIAL_ABILITY_RESET(plyr, 0);
+  ENABLE_SPECIAL_ABILITY(plyr, BOOL(1), 0);
   SET_DISPATCH_COPS_FOR_PLAYER(plyr, BOOL(1));
   SET_PED_MAX_HEALTH(GET_PLAYER_PED(plyr), 200);
-  SET_ENTITY_HEALTH(GET_PLAYER_PED(plyr), 200);
+  SET_ENTITY_HEALTH(GET_PLAYER_PED(plyr), 200, 0, 0);
   SET_PLAYER_MAX_ARMOUR(plyr, 200);
   SET_PED_ARMOUR(GET_PLAYER_PED(plyr), 0);
   SET_PLAYER_CONTROL(plyr, BOOL(1), 0);
@@ -212,7 +217,7 @@ begin
         end;
   SET_ENTITY_COORDS(GET_PLAYER_PED(plyr), DefaultRespawnLocation.X, DefaultRespawnLocation.Y, DefaultRespawnLocation.Z, BOOL(0), BOOL(0), BOOL(0), BOOL(0));
   SET_ENTITY_HEADING(GET_PLAYER_PED(plyr), DefaultRespawnLocation.A);
-  veh := CREATE_VEHICLE(h, DefaultRespawnLocation.X, DefaultRespawnLocation.Y, DefaultRespawnLocation.Z, DefaultRespawnLocation.A, BOOL(0), BOOL(0));
+  veh := CREATE_VEHICLE(h, DefaultRespawnLocation.X, DefaultRespawnLocation.Y, DefaultRespawnLocation.Z, DefaultRespawnLocation.A, BOOL(0), BOOL(0), BOOL(0));
   SET_PED_INTO_VEHICLE(GET_PLAYER_PED(plyr), veh, -1);
   SET_VEHICLE_AS_NO_LONGER_NEEDED(@veh);
   SET_MODEL_AS_NO_LONGER_NEEDED(h);
