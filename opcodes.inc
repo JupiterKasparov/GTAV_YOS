@@ -1590,6 +1590,7 @@ begin
 
    // Show the save screen
    GameScreen.MenuMode := gmSaveGame;
+   thread.waitTime := 0;
    thread.status := tstWaiting;
 end;
 
@@ -1865,18 +1866,16 @@ procedure scr_0066_clear_mission_pickups(thread: TMissionThread; negateresult: b
 var
   i: integer;
   worldObjectCount: cint;
-  worldObjectData: array [0..65535] of cint;
+  worldObjectData: array [0..16383] of cint;
 begin
    worldObjectCount := worldGetAllPickups(pcint(worldObjectData), Length(worldObjectData));
    for i := 0 to worldObjectCount - 1 do
-      begin
-        if not thread.script.IsManagedPickup(worldObjectData[i]) then
-          begin
-            if (IS_ENTITY_A_MISSION_ENTITY(worldObjectData[i]) = BOOL(0)) then
-              SET_ENTITY_AS_MISSION_ENTITY(worldObjectData[i], BOOL(1), BOOL(1));
-            REMOVE_PICKUP(worldObjectData[i]);
-          end;
-      end;
+      if not thread.script.IsManagedPickup(worldObjectData[i]) then
+        begin
+          if (IS_ENTITY_A_MISSION_ENTITY(worldObjectData[i]) = BOOL(0)) then
+            SET_ENTITY_AS_MISSION_ENTITY(worldObjectData[i], BOOL(1), BOOL(1));
+          REMOVE_PICKUP(worldObjectData[i]);
+        end;
 end;
 
 {Gets, if the Pickup with the given handle is a YOS managed pickup}
@@ -2010,18 +2009,15 @@ procedure scr_006B_clear_mission_objects(thread: TMissionThread; negateresult: b
 var
   i: integer;
   worldObjectCount: cint;
-  worldObjectData: array [0..65535] of cint;
+  worldObjectData: array [0..16383] of cint;
 begin
    worldObjectCount := worldGetAllObjects(pcint(worldObjectData), Length(worldObjectData));
    for i := 0 to worldObjectCount - 1 do
-      begin
-        if not thread.script.IsManagedObject(worldObjectData[i]) then
-          begin
-            if (IS_ENTITY_A_MISSION_ENTITY(worldObjectData[i]) = BOOL(0)) then
-              SET_ENTITY_AS_MISSION_ENTITY(worldObjectData[i], BOOL(1), BOOL(1));
+      if (GET_ENTITY_TYPE(worldObjectData[i]) = 3) and (not thread.script.IsManagedObject(worldObjectData[i])) then
+        begin
+          if (IS_ENTITY_A_MISSION_ENTITY(worldObjectData[i]) <> BOOL(0)) then
             DELETE_OBJECT(@worldObjectData[i]);
-          end;
-      end;
+        end;
 end;
 
 {Gets, if the Object with the given handle is registered to be managed by YOS}

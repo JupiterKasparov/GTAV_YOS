@@ -44,8 +44,10 @@ procedure ClearWorldMap;
 var
   i: integer;
   worldObjectCount: cint;
-  worldObjectData: array [0..65535] of cint;
+  worldObjectData: array [0..16383] of cint;
   b, next: Blip;
+  plyrp: Ped;
+  plyrv: Vehicle;
 begin
   // START
   DO_SCREEN_FADE_OUT(1);
@@ -105,11 +107,10 @@ begin
   CLEAR_GPS_CUSTOM_ROUTE;
   CLEAR_GPS_PLAYER_WAYPOINT;
   DELETE_WAYPOINTS_FROM_THIS_PLAYER;
-
-  CLEAR_AREA_OF_PEDS(0.0, 0.0, 0.0, 25000.0, 1);
-  CLEAR_AREA_OF_VEHICLES(0.0, 0.0, 0.0, 25000.0, BOOL(0), BOOL(0), BOOL(0), BOOL(0), BOOL(0), BOOL(0), 0);
-  CLEAR_AREA(0.0, 0.0, 0.0, 25000.0, BOOL(1), BOOL(0), BOOL(0), BOOL(0));
   SET_STUNT_JUMPS_CAN_TRIGGER(BOOL(0));
+
+  plyrp := GET_PLAYER_PED(GET_PLAYER_INDEX);
+  plyrv := GET_VEHICLE_PED_IS_USING(plyrp);
 
   worldObjectCount := worldGetAllPickups(pcint(worldObjectData), Length(worldObjectData));
   for i := 0 to worldObjectCount - 1 do
@@ -118,6 +119,30 @@ begin
            SET_ENTITY_AS_MISSION_ENTITY(worldObjectData[i], BOOL(1), BOOL(1));
         REMOVE_PICKUP(worldObjectData[i]);
       end;
+  worldObjectCount := worldGetAllPeds(pcint(worldObjectData), Length(worldObjectData));
+  for i := 0 to worldObjectCount - 1 do
+      if (worldObjectData[i] <> plyrp) then
+         begin
+           if (IS_ENTITY_A_MISSION_ENTITY(worldObjectData[i]) = BOOL(0)) then
+              SET_ENTITY_AS_MISSION_ENTITY(worldObjectData[i], BOOL(1), BOOL(1));
+           DELETE_PED(@worldObjectData[i]);
+         end;
+  worldObjectCount := worldGetAllVehicles(pcint(worldObjectData), Length(worldObjectData));
+  for i := 0 to worldObjectCount - 1 do
+      if (worldObjectData[i] <> plyrv) then
+         begin
+           if (IS_ENTITY_A_MISSION_ENTITY(worldObjectData[i]) = BOOL(0)) then
+              SET_ENTITY_AS_MISSION_ENTITY(worldObjectData[i], BOOL(1), BOOL(1));
+           DELETE_VEHICLE(@worldObjectData[i]);
+         end;
+  worldObjectCount := worldGetAllObjects(pcint(worldObjectData), Length(worldObjectData));
+  for i := 0 to worldObjectCount - 1 do
+      if (GET_ENTITY_TYPE(worldObjectData[i]) = 3) then
+         begin
+           if (IS_ENTITY_A_MISSION_ENTITY(worldObjectData[i]) <> BOOL(0)) then
+              DELETE_OBJECT(@worldObjectData[i]);
+         end;
+  CLEAR_AREA(0.0, 0.0, 0.0, 25000.0, BOOL(1), BOOL(0), BOOL(0), BOOL(0));
   for i := 0 to 16383 do
       begin
         b := GET_FIRST_BLIP_INFO_ID(cint(i));
