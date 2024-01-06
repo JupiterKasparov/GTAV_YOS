@@ -14,6 +14,7 @@ type
 procedure WriteCString(str: string; stream: TStream);
 function ReadCString(stream: TStream): string;
 function ReadRawData(filename: string): TStrings;
+function GetDataItem(dataline: string; index: integer; separators: TSysCharSet): string;
 function GetSaveFileName(sgi: integer): string;
 function IsInCube(x, y, z, x1, y1, z1, x2, y2, z2: cfloat): boolean;
 function IsInAngledCube(x, y, z, x1, y1, z1, x2, y2, z2, a: cfloat): boolean;
@@ -27,10 +28,10 @@ function GTA5_GetArrayItem(var arr: TGTA5Array; index: integer): UINT32;
 // Debug commands
 procedure Log(category, str: string);
 
-implementation
-
 var
-  bHasLogFile: boolean = false;
+  YosFormatSettings: TFormatSettings;
+
+implementation
 
 procedure WriteCString(str: string; stream: TStream);
 var
@@ -71,6 +72,36 @@ begin
         end;
   System.Close(f);
   {$I+}
+end;
+
+function GetDataItem(dataline: string; index: integer; separators: TSysCharSet): string;
+var
+  ci, i: integer;
+  s: string;
+begin
+  ci := 0;
+  s := '';
+  for i := 1 to Length(dataline) do
+      begin
+        if (dataline[i] in separators) or (i = Length(dataline)) then
+           begin
+             if (ci >= index) then
+                begin
+                  if not (dataline[i] in separators) then
+                     s := s + dataline[i]; // The latest character of the line also counts, if not a separator!
+                  exit(Trim(s)); // If we've found what do we need, just exit quickly!
+                end
+             else
+                begin
+                  s := '';
+                  inc(ci);
+                end;
+           end
+        else
+           s := s + dataline[i];
+      end;
+  // By this point, if we haven't found anything, we're already out of the game...
+  Result := '';
 end;
 
 function GetSaveFileName(sgi: integer): string;
@@ -178,6 +209,9 @@ begin
   Result := arr[2 + (index * 2)];
 end;
 
+var
+  bHasLogFile: boolean = false;
+
 procedure Log(category, str: string);
 const
   logFileName: string = 'yos_debug.log';
@@ -199,6 +233,12 @@ begin
   System.Close(f);
   {$I+}
 end;
+
+initialization
+  YosFormatSettings := DefaultFormatSettings;
+  YosFormatSettings.DecimalSeparator := '.';
+  YosFormatSettings.ShortDateFormat := 'DD MMM YYYY';
+  YosFormatSettings.LongTimeFormat := 'hh:nn:ss';
 
 end.
 

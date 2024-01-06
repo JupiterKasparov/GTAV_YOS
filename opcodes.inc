@@ -815,8 +815,7 @@ begin
    {Param: 'float_value'}
    floatValue := thread.GetNextParameterFloat;
    {Convert and save result}
-   DefaultFormatSettings.DecimalSeparator := '.';
-   thread.AllocateString(vloc, vid, FloatToStr(floatValue));
+   thread.AllocateString(vloc, vid, FloatToStr(floatValue, YosFormatSettings));
 end;
 
 {Concat strings}

@@ -145,7 +145,7 @@ procedure LoadMenuData;
           var
             f: real;
           begin
-            if TryStrToFloat(Trim(flt), f) then
+            if TryStrToFloat(Trim(flt), f, YosFormatSettings) then
                Result := min(1.0, max(0.0, f))
             else
                Result := 0.0;
@@ -159,36 +159,6 @@ procedure LoadMenuData;
                Result := byte(min(255, max(0, i)))
             else
                Result := 0;
-          end;
-
-          function GetDataItem(dataline: string; index: integer): string;
-          var
-            ci, i: integer;
-            s: string;
-          begin
-            ci := 0;
-            s := '';
-            for i := 1 to Length(dataline) do
-                begin
-                  if (dataline[i] = ',') or (i = Length(dataline)) then
-                     begin
-                       if (ci >= index) then
-                          begin
-                            if (dataline[i] <> ',') then
-                               s := s + dataline[i]; // The latest character of the line also counts, if not a separator!
-                            exit(s); // If we've found what do we need, just exit quickly!
-                          end
-                       else
-                          begin
-                            s := '';
-                            inc(ci);
-                          end;
-                     end
-                  else
-                     s := s + dataline[i];
-                end;
-            // By this point, if we haven't found anything, we're already out of the game...
-            Result := '';
           end;
 
 var
@@ -206,10 +176,10 @@ begin
     for color := Low(TMenuColorType) to High(TMenuColorType) do
         begin
           dataline := Trim(datafile.ReadString('Colors', MenuColors[color].ColorId, ''));
-          MenuColors[color].R := ByteNorm(GetDataItem(dataline, 0));
-          MenuColors[color].G := ByteNorm(GetDataItem(dataline, 1));
-          MenuColors[color].B := ByteNorm(GetDataItem(dataline, 2));
-          MenuColors[color].A := ByteNorm(GetDataItem(dataline, 3));
+          MenuColors[color].R := ByteNorm(GetDataItem(dataline, 0, [',']));
+          MenuColors[color].G := ByteNorm(GetDataItem(dataline, 1, [',']));
+          MenuColors[color].B := ByteNorm(GetDataItem(dataline, 2, [',']));
+          MenuColors[color].A := ByteNorm(GetDataItem(dataline, 3, [',']));
         end;
 
     // Text mappings
@@ -226,10 +196,10 @@ begin
     for i := 0 to High(MenuItems) do
         begin
           dataline := Trim(datafile.ReadString('Dimensions', MenuItems[i].ItemId, ''));
-          MenuItems[i].L := FloatNorm(GetDataItem(dataline, 0));
-          MenuItems[i].T := FloatNorm(GetDataItem(dataline, 1));
-          MenuItems[i].W := FloatNorm(GetDataItem(dataline, 2));
-          MenuItems[i].H := FloatNorm(GetDataItem(dataline, 3));
+          MenuItems[i].L := FloatNorm(GetDataItem(dataline, 0, [',']));
+          MenuItems[i].T := FloatNorm(GetDataItem(dataline, 1, [',']));
+          MenuItems[i].W := FloatNorm(GetDataItem(dataline, 2, [',']));
+          MenuItems[i].H := FloatNorm(GetDataItem(dataline, 3, [',']));
         end;
   finally
     datafile.Free;
@@ -313,7 +283,7 @@ begin
                try
                  // NOTE: This procedure treats the savefiles in the exact same way, as the Load / Save methods of the TMissionScript class!
                  stream.Position := 17;
-                 savegameTitles[i] := ReadCString(stream) + ' ' +  FormatDateTime('DD MMM YYYY hh:nn:ss', FileDateToDateTime(FileAge(savefile)));
+                 savegameTitles[i] := ReadCString(stream) + ' ' +  DateTimeToStr(FileDateToDateTime(FileAge(savefile)), YosFormatSettings, true);
                except
                  savegameTitles[i] := '';
                end;
@@ -624,15 +594,19 @@ begin
        if (not Result) and (currentMenu in [gmLoadGame, gmSaveGame]) then
           begin
             // Background
-            case playerindex of
-                 0: GET_HUD_COLOUR(143, @r, @g, @b, @a);  // Michael
-                 1: GET_HUD_COLOUR(144, @r, @g, @b, @a);  // Franklin
-                 2: GET_HUD_COLOUR(145, @r, @g, @b, @a);  // Trevor
-                 else GET_HUD_COLOUR(28, @r, @g, @b, @a); // Net Player 1 ???
-            end;
-            if not gameStarted then
-               DRAW_RECT(0.5, 0.5, 1.0, 1.0, 0, 0, 0, 255, BOOL(0)); // Game not yet started? Hide the vanilla Prologue story remains behind a black backrop...
-            DRAW_RECT(0.5, 0.5, 1.0, 1.0, r, g, b, 128, BOOL(0));
+            if gameStarted then
+               begin
+                 case playerindex of
+                      0: GET_HUD_COLOUR(143, @r, @g, @b, @a);  // Michael
+                      1: GET_HUD_COLOUR(144, @r, @g, @b, @a);  // Franklin
+                      2: GET_HUD_COLOUR(145, @r, @g, @b, @a);  // Trevor
+                      else GET_HUD_COLOUR(28, @r, @g, @b, @a); // Net Player 1 ???
+                 end;
+                 DRAW_RECT(0.5, 0.5, 1.0, 1.0, r, g, b, 128, BOOL(0));
+               end
+            else
+               DRAW_RECT(0.5, 0.5, 1.0, 1.0, 0, 0, 0, 255, BOOL(0));
+
             // Items
             for i := 0 to High(MenuItems) do
                 if (MenuItems[i].ItemType = mitTitle) then
@@ -719,7 +693,6 @@ end;
 
 
 initialization
-  DefaultFormatSettings.DecimalSeparator := '.';
   ClearCustomTextures;
   LoadMenuData;
   GameScreen := TGameScreen.Create;

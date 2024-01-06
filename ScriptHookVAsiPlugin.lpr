@@ -4,7 +4,8 @@ library ScriptHookVAsiPlugin;
 {$H+}
 
 uses
-  Windows, ctypes, ScriptHookV, Natives, YOS_Script, YOS_WorldManager, YOS_Utils, YOS_Screen;
+  Windows, ctypes, ScriptHookV, Natives, YOS_Script, YOS_WorldManager,
+  YOS_Utils, YOS_Screen, YOS_DataFiles;
 
 procedure ScriptMain; cdecl;
 var

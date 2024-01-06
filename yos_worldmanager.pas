@@ -5,7 +5,7 @@ unit YOS_WorldManager;
 interface
 
 uses
-  ScriptHookV, Natives, Windows, ctypes, Classes, SysUtils, YOS_Screen, YOS_Utils;
+  ScriptHookV, Natives, Windows, ctypes, Classes, SysUtils, YOS_Screen, YOS_Utils, YOS_DataFiles;
 
 procedure KillStoryScripts;
 procedure ClearWorldMap;
@@ -18,7 +18,7 @@ uses
   YOS_Script;
 
 var
-  DisabledScriptList, DisabledMapList, AudioFlagList: TStrings;
+  DisabledScriptList, DisabledMapList: TStrings;
 
 procedure KillStoryScripts;
 var
@@ -84,8 +84,11 @@ begin
 
   // Reset world flags
   SET_RANDOM_TRAINS(BOOL(1));
-  for i := 0 to AudioFlagList.Count - 1 do
-      SET_AUDIO_FLAG(PChar(AudioFlagList[i]), BOOL(0));
+  for i := 0 to GetAudioFlagCount - 1 do
+      if GetAudioFlagDefaultValue(i) then
+         SET_AUDIO_FLAG(PChar(GetAudioFlagName(i)), BOOL(1))
+      else
+         SET_AUDIO_FLAG(PChar(GetAudioFlagName(i)), BOOL(0));
   SET_CREATE_RANDOM_COPS(BOOL(1));
   SET_CREATE_RANDOM_COPS_NOT_ON_SCENARIOS(BOOL(1));
   SET_CREATE_RANDOM_COPS_ON_SCENARIOS(BOOL(1));
@@ -94,6 +97,7 @@ begin
   for i := 1 to 15 do
       ENABLE_DISPATCH_SERVICE(cint(i), BOOL(1));
   SET_ALL_VEHICLE_GENERATORS_ACTIVE;
+  STOP_ANY_PED_MODEL_BEING_SUPPRESSED;
 
   // Clear game objects
   CLEAR_BRIEF;
@@ -102,6 +106,7 @@ begin
   DELETE_ALL_TRAINS;
   REMOVE_ALL_COVER_BLOCKING_AREAS;
   REMOVE_SCENARIO_BLOCKING_AREAS;
+  CLEAR_PED_NON_CREATION_AREA;
   SET_ROADS_BACK_TO_ORIGINAL(-12500.0, -12500.0, -200.0, 12500.0, 12500.0, 5000.0, 1);
   SET_PED_PATHS_BACK_TO_ORIGINAL(-12500.0, -12500.0, -200.0, 12500.0, 12500.0, 5000.0, 1);
   CLEAR_GPS_CUSTOM_ROUTE;
@@ -186,9 +191,9 @@ begin
 
   // Reset player skin
   h := GET_HASH_KEY(PChar('player_zero'));
-  REQUEST_MODEL(h);
   while (HAS_MODEL_LOADED(h) = BOOL(0)) do
         begin
+          REQUEST_MODEL(h);
           GameScreen.DrawLoadingScreen;
           ScriptHookVWait(0);
         end;
@@ -234,9 +239,9 @@ var
 begin
   plyr := GET_PLAYER_INDEX;
   h := GET_HASH_KEY(PChar('Seashark2'));
-  REQUEST_MODEL(h);
   while (HAS_MODEL_LOADED(h) = BOOL(0)) do
         begin
+          REQUEST_MODEL(h);
           GameScreen.DrawLoadingScreen;
           ScriptHookVWait(0);
         end;
@@ -251,12 +256,10 @@ end;
 initialization
   DisabledScriptList := ReadRawData('yos_data/data/GTAScriptList.dat');
   DisabledMapList := ReadRawData('yos_data/data/NorthYanktonList.dat');
-  AudioFlagList := ReadRawData('yos_data/data/AudioFlags.dat');
 
 finalization
   DisabledScriptList.Free;
   DisabledMapList.Free;
-  AudioFlagList.Free;
 
 end.
 

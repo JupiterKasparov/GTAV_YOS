@@ -5,11 +5,12 @@ unit YOS_Script;
 interface
 
 uses
-  ScriptHookV, Natives, Windows, ctypes, SysUtils, Classes, INIFiles, YOS_Screen, YOS_WorldManager, YOS_Utils;
+  ScriptHookV, Natives, Windows, ctypes, SysUtils, Classes,
+  YOS_Screen, YOS_WorldManager, YOS_Utils, YOS_DataFiles;
 
 const
   SCRIPT_MAJOR_VERSION = 2;
-  SCRIPT_MINOR_VERSION = 1;
+  SCRIPT_MINOR_VERSION = 2;
 
 type
   // Forward declarations
@@ -88,15 +89,31 @@ type
   end;
 
   TStoredVehicleData = record
-    Model, Color1, Color2, ColorCombo, ModKit, WheelType, WindowTint, Livery: cint;
-    TireSmokeColor: array [0..2] of cint;
-    VehicleMods: array [0..49] of cint;
-    ModColor1: array [0..2] of cint;
-    ModColor2: array [0..1] of cint;
-    ExtraColor: array [0..1] of cint;
-    CustomPriColor: array [0..2] of cint;
-    CustomSecColor:  array [0..2] of cint;
+    Model: Hash;
+    PriColor, SecColor: cint;
+    CustColorPri, CustColorSec: record
+      Enabled: boolean;
+      R, G, B: cint;
+    end;
+    WheelType: cint;
+    Mods: array [0..49] of record
+      ModIndex: cint;
+      ModVariation: boolean;
+    end;
     BulletProofTires: boolean;
+    TyreSmokeColor: record
+      R, G, B: cint;
+    end;
+    NumberPlateIndex: cint;
+    NumberPlateText: string;
+    PearlColor, RimColor: cint;
+    RoofState: boolean; // For Convertibles
+    Extras: array [0..60] of boolean;
+    Livery: cint;
+    NeonColor: record
+      R, G, B: cint;
+    end;
+    WindowTint, InteriorColor, DashboardColor, XenonColor: cint;
   end;
   TStoredPlayerData = record
     X, Y, Z, A: cfloat;
@@ -271,8 +288,7 @@ implementation
 var
   _is_dll_init_final_: boolean; // This must be set to true during DLL init / final, to prevent object init/final from calling Natives, and causing a game crash!
   pFreq: LARGE_INTEGER;
-  IntStats, FloatStats, WeaponModels, WeaponCompModels: TStrings;
-  DefaultStatsValues: TIniFile;
+  WeaponModels, WeaponCompModels: TStrings;
 
 function CurrentTimeMs: int64;
 var
@@ -721,9 +737,9 @@ begin
   // Spawn object
   if (model <> 0) then // Only try to load objects, that were valid upon being saved....
     begin
-      REQUEST_MODEL(model);
       while (HAS_MODEL_LOADED(model) = BOOL(0)) do
             begin
+              REQUEST_MODEL(model);
               GameScreen.DrawLoadingScreen;
               ScriptHookVWait(0);
             end;
@@ -933,9 +949,9 @@ begin
   if (actor = GET_PLAYER_PED(GET_PLAYER_INDEX)) then
     begin
       // Can only change the Player's model, but not of Peds'
-      REQUEST_MODEL(data.Model);
       while (HAS_MODEL_LOADED(data.model) = BOOL(0)) do
             begin
+              REQUEST_MODEL(data.Model);
               GameScreen.DrawLoadingScreen;
               ScriptHookVWait(0);
             end;
@@ -1077,73 +1093,120 @@ end;
 procedure TMissionScript.StoreVehicle(var data: TStoredVehicleData; veh: Vehicle);
 var
   i: integer;
-  ci1, ci2, ci3: cint;
 begin
+  ZeroMemory(@data, sizeof(TStoredVehicleData));
   data.Model := GET_ENTITY_MODEL(veh);
-  GET_VEHICLE_COLOURS(veh, @ci1, @ci2);
-  data.Color1 := ci1;
-  data.Color2 := ci2;
-  data.ColorCombo := GET_VEHICLE_COLOUR_COMBINATION(veh);
-  data.ModKit := GET_VEHICLE_MOD_KIT(veh);
+  GET_VEHICLE_COLOURS(veh, @data.PriColor, @data.SecColor);
+  data.CustColorPri.Enabled := (GET_IS_VEHICLE_PRIMARY_COLOUR_CUSTOM(veh) <> BOOL(0));
+  if data.CustColorPri.Enabled then
+    GET_VEHICLE_CUSTOM_PRIMARY_COLOUR(veh, @data.CustColorPri.R, @data.CustColorPri.G, @data.CustColorPri.B);
+  data.CustColorSec.Enabled := (GET_IS_VEHICLE_SECONDARY_COLOUR_CUSTOM(veh) <> BOOL(0));
+  if data.CustColorSec.Enabled then
+    GET_VEHICLE_CUSTOM_SECONDARY_COLOUR(veh, @data.CustColorSec.R, @data.CustColorSec.G, @data.CustColorSec.B);
   data.WheelType := GET_VEHICLE_WHEEL_TYPE(veh);
-  data.WindowTint := GET_VEHICLE_WINDOW_TINT(veh);
-  data.Livery := GET_VEHICLE_LIVERY(veh);
-  GET_VEHICLE_TYRE_SMOKE_COLOR(veh, @ci1, @ci2, @ci3);
-  data.TireSmokeColor[0] := ci1;
-  data.TireSmokeColor[1] := ci2;
-  data.TireSmokeColor[2] := ci3;
-  for i := 0 to 49 do
-      data.VehicleMods[i] := GET_VEHICLE_MOD(veh, cint(i));
-  GET_VEHICLE_MOD_COLOR_1(veh, @ci1, @ci2, @ci3);
-  data.ModColor1[0] := ci1;
-  data.ModColor1[1] := ci2;
-  data.ModColor1[2] := ci3;
-  GET_VEHICLE_MOD_COLOR_2(veh, @ci1, @ci2);
-  data.ModColor2[0] := ci1;
-  data.ModColor2[1] := ci2;
-  GET_VEHICLE_EXTRA_COLOURS(veh, @ci1, @ci2);
-  data.ExtraColor[0] := ci1;
-  data.ExtraColor[1] := ci2;
-  GET_VEHICLE_CUSTOM_PRIMARY_COLOUR(veh, @ci1, @ci2, @ci3);
-  data.CustomPriColor[0] := ci1;
-  data.CustomPriColor[1] := ci2;
-  data.CustomPriColor[2] := ci3;
-  GET_VEHICLE_CUSTOM_SECONDARY_COLOUR(veh, @ci1, @ci2, @ci3);
-  data.CustomSecColor[0] := ci1;
-  data.CustomSecColor[1] := ci2;
-  data.CustomSecColor[2] := ci3;
+  for i := Low(data.Mods) to High(data.Mods) do
+      begin
+        if (i in [17..22]) then
+          begin
+            if (IS_TOGGLE_MOD_ON(veh, cint(i)) <> BOOL(0)) then
+              data.Mods[i].ModIndex := 1
+            else
+              data.Mods[i].ModIndex := 0;
+          end
+        else
+          begin
+            data.Mods[i].ModIndex := GET_VEHICLE_MOD(veh, cint(i));
+            data.Mods[i].ModVariation := (GET_VEHICLE_MOD_VARIATION(veh, cint(i)) <> 0);
+          end;
+      end;
   data.BulletProofTires := (GET_VEHICLE_TYRES_CAN_BURST(veh) <> BOOL(0));
+  GET_VEHICLE_TYRE_SMOKE_COLOR(veh, @data.TyreSmokeColor.R, @data.TyreSmokeColor.G, @data.TyreSmokeColor.B);
+  data.NumberPlateIndex := GET_VEHICLE_NUMBER_PLATE_TEXT_INDEX(veh);
+  data.NumberPlateText := strpas(GET_VEHICLE_NUMBER_PLATE_TEXT(veh));
+  GET_VEHICLE_EXTRA_COLOURS(veh, @data.PearlColor, @data.RimColor);
+  if (IS_VEHICLE_A_CONVERTIBLE(veh, BOOL(0)) <> BOOL(0)) then
+    data.RoofState := (GET_CONVERTIBLE_ROOF_STATE(veh) in [0, 1])
+  else
+    data.RoofState := false;
+  for i := Low(data.Extras) to High(data.Extras) do
+      begin
+        if (DOES_EXTRA_EXIST(veh, cint(i)) <> BOOL(0)) then
+          data.Extras[i] := (IS_VEHICLE_EXTRA_TURNED_ON(veh, cint(i)) <> BOOL(0))
+        else
+          data.Extras[i] := false;
+      end;
+  data.Livery := GET_VEHICLE_LIVERY(veh);
+  GET_VEHICLE_NEON_COLOUR(veh, @data.NeonColor.R, @data.NeonColor.G, @data.NeonColor.B);
+  data.WindowTint := GET_VEHICLE_WINDOW_TINT(veh);
+  GET_VEHICLE_EXTRA_COLOUR_5(veh, @data.InteriorColor);
+  GET_VEHICLE_EXTRA_COLOUR_6(veh, @data.DashboardColor);
+  data.XenonColor := GET_VEHICLE_XENON_LIGHT_COLOR_INDEX(veh);
 end;
 
 function TMissionScript.RestoreVehicle(data: TVehiclePersistenceData): Vehicle;
 var
   i: integer;
 begin
-  REQUEST_MODEL(data.VehicleData.Model);
+  // Load model
   while (HAS_MODEL_LOADED(data.VehicleData.Model) = BOOL(0)) do
         begin
+          REQUEST_MODEL(data.VehicleData.Model);
           GameScreen.DrawLoadingScreen;
           ScriptHookVWait(0);
         end;
+
+  // Spawn car
   Result := CREATE_VEHICLE(data.VehicleData.Model, data.X, data.Y, data.Z, data.A, BOOL(0), BOOL(0), BOOL(0));
-  SET_VEHICLE_COLOURS(Result, data.VehicleData.Color1, data.VehicleData.Color2);
-  SET_VEHICLE_COLOUR_COMBINATION(Result, data.VehicleData.ColorCombo);
-  SET_VEHICLE_MOD_KIT(Result, data.VehicleData.ModKit);
+
+  // Setup car
+  SET_VEHICLE_COLOURS(Result, data.VehicleData.PriColor, data.VehicleData.SecColor);
+  if data.VehicleData.CustColorPri.Enabled then
+    SET_VEHICLE_CUSTOM_PRIMARY_COLOUR(Result, data.VehicleData.CustColorPri.R, data.VehicleData.CustColorPri.G, data.VehicleData.CustColorPri.B);
+  if data.VehicleData.CustColorSec.Enabled then
+    SET_VEHICLE_CUSTOM_SECONDARY_COLOUR(Result, data.VehicleData.CustColorSec.R, data.VehicleData.CustColorSec.G, data.VehicleData.CustColorSec.B);
+  SET_VEHICLE_MOD_KIT(Result, 0);
   SET_VEHICLE_WHEEL_TYPE(Result, data.VehicleData.WheelType);
-  SET_VEHICLE_WINDOW_TINT(Result, data.VehicleData.WindowTint);
-  SET_VEHICLE_LIVERY(Result, data.VehicleData.Livery);
-  SET_VEHICLE_TYRE_SMOKE_COLOR(Result, data.VehicleData.TireSmokeColor[0], data.VehicleData.TireSmokeColor[1], data.VehicleData.TireSmokeColor[2]);
-  for i := 0 to 49 do
-      SET_VEHICLE_MOD(Result, cint(i), data.VehicleData.VehicleMods[i], BOOL(0));
-  SET_VEHICLE_MOD_COLOR_1(Result, data.VehicleData.ModColor1[0], data.VehicleData.ModColor1[1], data.VehicleData.ModColor1[2]);
-  SET_VEHICLE_MOD_COLOR_2(Result, data.VehicleData.ModColor2[0], data.VehicleData.ModColor2[1]);
-  SET_VEHICLE_EXTRA_COLOURS(Result, data.VehicleData.ExtraColor[0], data.VehicleData.ExtraColor[1]);
-  SET_VEHICLE_CUSTOM_PRIMARY_COLOUR(Result, data.VehicleData.CustomPriColor[0], data.VehicleData.CustomPriColor[1], data.VehicleData.CustomPriColor[2]);
-  SET_VEHICLE_CUSTOM_SECONDARY_COLOUR(Result, data.VehicleData.CustomSecColor[0], data.VehicleData.CustomSecColor[1], data.VehicleData.CustomSecColor[2]);
+  for i := Low(data.VehicleData.Mods) to High(data.VehicleData.Mods) do
+      begin
+        if (i in [17..22]) then
+          begin
+            if (data.VehicleData.Mods[i].ModIndex <> 0) then
+              TOGGLE_VEHICLE_MOD(Result, cint(i), BOOL(1));
+          end
+        else
+          begin
+            if data.VehicleData.Mods[i].ModVariation then
+              SET_VEHICLE_MOD(Result, cint(i), data.VehicleData.Mods[i].ModIndex, BOOL(1))
+            else
+              SET_VEHICLE_MOD(Result, cint(i), data.VehicleData.Mods[i].ModIndex, BOOL(0));
+          end;
+      end;
   if data.VehicleData.BulletProofTires then
     SET_VEHICLE_TYRES_CAN_BURST(Result, BOOL(0))
   else
     SET_VEHICLE_TYRES_CAN_BURST(Result, BOOL(1));
+  SET_VEHICLE_TYRE_SMOKE_COLOR(Result, data.VehicleData.TyreSmokeColor.R, data.VehicleData.TyreSmokeColor.G, data.VehicleData.TyreSmokeColor.B);
+  SET_VEHICLE_NUMBER_PLATE_TEXT_INDEX(Result, data.VehicleData.NumberPlateIndex);
+  SET_VEHICLE_NUMBER_PLATE_TEXT(Result, PChar(data.VehicleData.NumberPlateText));
+  SET_VEHICLE_EXTRA_COLOURS(Result, data.VehicleData.PearlColor, data.VehicleData.RimColor);
+  if (IS_VEHICLE_A_CONVERTIBLE(Result, BOOL(0)) <> BOOL(0)) then
+    begin
+      if data.VehicleData.RoofState then
+        RAISE_CONVERTIBLE_ROOF(Result, BOOL(1))
+      else
+        LOWER_CONVERTIBLE_ROOF(Result, BOOL(1));
+    end;
+  for i := Low(data.VehicleData.Extras) to High(data.VehicleData.Extras) do
+      if data.VehicleData.Extras[i] then
+        SET_VEHICLE_EXTRA(Result, cint(i), BOOL(0));
+  SET_VEHICLE_LIVERY(Result, data.VehicleData.Livery);
+  SET_VEHICLE_NEON_COLOUR(Result, data.VehicleData.NeonColor.R, data.VehicleData.NeonColor.G, data.VehicleData.NeonColor.B);
+  SET_VEHICLE_WINDOW_TINT(Result, data.VehicleData.WindowTint);
+  SET_VEHICLE_EXTRA_COLOUR_5(Result, data.VehicleData.InteriorColor);
+  SET_VEHICLE_EXTRA_COLOUR_6(Result, data.VehicleData.DashboardColor);
+  SET_VEHICLE_XENON_LIGHT_COLOR_INDEX(Result, data.VehicleData.XenonColor);
+
+  // Unload model
   SET_MODEL_AS_NO_LONGER_NEEDED(data.VehicleData.Model);
 end;
 
@@ -1151,29 +1214,90 @@ procedure TMissionScript.LoadVehicleData(var data: TStoredVehicleData; stream: T
 var
   i: integer;
 begin
-  data.Model := stream.ReadDWord;
-  data.Color1 := stream.ReadDWord;
-  data.Color2 := stream.ReadDWord;
-  data.ColorCombo := stream.ReadDWord;
-  data.ModKit := stream.ReadDWord;
-  data.WheelType := stream.ReadDWord;
-  data.WindowTint := stream.ReadDWord;
-  data.Livery := stream.ReadDWord;
-  for i := 0 to 2 do
-      data.TireSmokeColor[i] := stream.ReadDWord;
-  for i := 0 to 49 do
-      data.VehicleMods[i] := stream.ReadDWord;
-  for i := 0 to 2 do
-      data.ModColor1[i] := stream.ReadDWord;
-  for i := 0 to 1 do
-      data.ModColor2[i] := stream.ReadDWord;
-  for i := 0 to 1 do
-      data.ExtraColor[i] := stream.ReadDWord;
-  for i := 0 to 2 do
-      data.CustomPriColor[i] := stream.ReadDWord;
-  for i := 0 to 2 do
-      data.CustomSecColor[i] := stream.ReadDWord;
-  data.BulletProofTires := (stream.ReadByte <> 0);
+  if (savMajorVer > 2) or (savMinorVer > 1) then // 2.0, 2.1 compatibility
+    begin
+      data.Model := stream.ReadDWord;
+      data.PriColor := stream.ReadDWord;
+      data.SecColor := stream.ReadDWord;
+      data.CustColorPri.Enabled := (stream.ReadByte <> 0);
+      if data.CustColorPri.Enabled then
+        begin
+          data.CustColorPri.R := stream.ReadDWord;
+          data.CustColorPri.G := stream.ReadDWord;
+          data.CustColorPri.B := stream.ReadDWord;
+        end;
+      data.CustColorSec.Enabled := (stream.ReadByte <> 0);
+      if data.CustColorSec.Enabled then
+        begin
+          data.CustColorSec.R := stream.ReadDWord;
+          data.CustColorSec.G := stream.ReadDWord;
+          data.CustColorSec.B := stream.ReadDWord;
+        end;
+      data.WheelType := stream.ReadDWord;
+      for i := Low(data.Mods) to High(data.Mods) do
+          begin
+            data.Mods[i].ModIndex := stream.ReadDWord;
+            data.Mods[i].ModVariation := (stream.ReadByte <> 0);
+          end;
+      data.BulletProofTires := (stream.ReadByte <> 0);
+      data.TyreSmokeColor.R := stream.ReadDWord;
+      data.TyreSmokeColor.G := stream.ReadDWord;
+      data.TyreSmokeColor.B := stream.ReadDWord;
+      data.NumberPlateIndex := stream.ReadDWord;
+      data.NumberPlateText := ReadCString(stream);
+      data.PearlColor := stream.ReadDWord;
+      data.RimColor := stream.ReadDWord;
+      data.RoofState := (stream.ReadByte <> 0);
+      for i := Low(data.Extras) to High(data.Extras) do
+          data.Extras[i] := (stream.ReadByte <> 0);
+      data.Livery := stream.ReadDWord;
+      data.NeonColor.R := stream.ReadDWord;
+      data.NeonColor.G := stream.ReadDWord;
+      data.NeonColor.B := stream.ReadDWord;
+      data.WindowTint := stream.ReadDWord;
+      data.InteriorColor := stream.ReadDWord;
+      data.DashboardColor := stream.ReadDWord;
+      data.XenonColor := stream.ReadDWord;
+    end
+  else
+    begin
+      ZeroMemory(@data, sizeof(TStoredVehicleData));
+
+      // Readable data (legacy)
+      data.Model := stream.ReadDWord;
+      data.PriColor := stream.ReadDWord;
+      data.SecColor := stream.ReadDWord;
+      stream.Seek(2 * sizeof(cint), soFromCurrent); // Skip unused legacy property: ColorCombination, ModKit
+      data.WheelType := stream.ReadDWord;
+      data.WindowTint := stream.ReadDWord;
+      data.Livery := stream.ReadDWord;
+      data.TyreSmokeColor.R := stream.ReadDWord;
+      data.TyreSmokeColor.G := stream.ReadDWord;
+      data.TyreSmokeColor.B := stream.ReadDWord;
+      for i := Low(data.Mods) to High(data.Mods) do
+          data.Mods[i].ModIndex := stream.ReadDWord;
+      stream.Seek(5 * sizeof(cint), soFromCurrent); // Skip unused legacy property: ModColor1, ModColor2
+      data.PearlColor := stream.ReadDWord;
+      data.RimColor := stream.ReadDWord;
+      data.CustColorPri.R := stream.ReadDWord;
+      data.CustColorPri.G := stream.ReadDWord;
+      data.CustColorPri.B := stream.ReadDWord;
+      data.CustColorSec.R := stream.ReadDWord;
+      data.CustColorSec.G := stream.ReadDWord;
+      data.CustColorSec.B := stream.ReadDWord;
+      data.BulletProofTires := (stream.ReadByte <> 0);
+
+      // Improvisation (non-zero data only)
+      data.CustColorPri.Enabled := true;
+      data.CustColorSec.Enabled := true;
+      data.NumberPlateIndex := -1;
+      data.NumberPlateText := '';
+      data.RoofState := true;
+      data.NeonColor.R := 255;
+      data.NeonColor.G := 255;
+      data.NeonColor.B := 255;
+      data.XenonColor := -1;
+    end;
 end;
 
 procedure TMissionScript.SaveVehicleData(data: TStoredVehicleData; stream: TStream); // Used, when the script data is saved into a savegame file
@@ -1181,31 +1305,63 @@ var
   i: integer;
 begin
   stream.WriteDWord(data.Model);
-  stream.WriteDWord(data.Color1);
-  stream.WriteDWord(data.Color2);
-  stream.WriteDWord(data.ColorCombo);
-  stream.WriteDWord(data.ModKit);
+  stream.WriteDWord(data.PriColor);
+  stream.WriteDWord(data.SecColor);
+  if data.CustColorPri.Enabled then
+    begin
+      stream.WriteByte(1);
+      stream.WriteDWord(data.CustColorPri.R);
+      stream.WriteDWord(data.CustColorPri.G);
+      stream.WriteDWord(data.CustColorPri.B);
+    end
+  else
+    stream.WriteByte(0);
+  if data.CustColorSec.Enabled then
+    begin
+      stream.WriteByte(1);
+      stream.WriteDWord(data.CustColorSec.R);
+      stream.WriteDWord(data.CustColorSec.G);
+      stream.WriteDWord(data.CustColorSec.B);
+    end
+  else
+    stream.WriteByte(0);
   stream.WriteDWord(data.WheelType);
-  stream.WriteDWord(data.WindowTint);
-  stream.WriteDWord(data.Livery);
-  for i := 0 to 2 do
-      stream.WriteDWord(data.TireSmokeColor[i]);
-  for i := 0 to 49 do
-      stream.WriteDWord(data.VehicleMods[i]);
-  for i := 0 to 2 do
-      stream.WriteDWord(data.ModColor1[i]);
-  for i := 0 to 1 do
-      stream.WriteDWord(data.ModColor2[i]);
-  for i := 0 to 1 do
-      stream.WriteDWord(data.ExtraColor[i]);
-  for i := 0 to 2 do
-      stream.WriteDWord(data.CustomPriColor[i]);
-  for i := 0 to 2 do
-      stream.WriteDWord(data.CustomSecColor[i]);
+  for i := Low(data.Mods) to High(data.Mods) do
+      begin
+        stream.WriteDWord(data.Mods[i].ModIndex);
+        if data.Mods[i].ModVariation then
+          stream.WriteByte(1)
+        else
+          stream.WriteByte(0);
+      end;
   if data.BulletProofTires then
     stream.WriteByte(1)
   else
     stream.WriteByte(0);
+  stream.WriteDWord(data.TyreSmokeColor.R);
+  stream.WriteDWord(data.TyreSmokeColor.G);
+  stream.WriteDWord(data.TyreSmokeColor.B);
+  stream.WriteDWord(data.NumberPlateIndex);
+  WriteCString(data.NumberPlateText, stream);
+  stream.WriteDWord(data.PearlColor);
+  stream.WriteDWord(data.RimColor);
+  if data.RoofState then
+    stream.WriteByte(1)
+  else
+    stream.WriteByte(0);
+  for i := Low(data.Extras) to High(data.Extras) do
+      if data.Extras[i] then
+        stream.WriteByte(1)
+      else
+        stream.WriteByte(0);
+  stream.WriteDWord(data.Livery);
+  stream.WriteDWord(data.NeonColor.R);
+  stream.WriteDWord(data.NeonColor.G);
+  stream.WriteDWord(data.NeonColor.B);
+  stream.WriteDWord(data.WindowTint);
+  stream.WriteDWord(data.InteriorColor);
+  stream.WriteDWord(data.DashboardColor);
+  stream.WriteDWord(data.XenonColor);
 end;
 
 constructor TMissionScript.Create(scriptfile: string);
@@ -1861,18 +2017,18 @@ begin
         end;
 
     // **** STATISTICS **** //
-    stream.WriteDWord(cint(IntStats.count));
-    for i := 0 to IntStats.count - 1 do
+    stream.WriteDWord(cint(GetIntStatCount));
+    for i := 0 to GetIntStatCount - 1 do
         begin
-          hash1 := GET_HASH_KEY(PChar(IntStats[i]));
+          hash1 := GET_HASH_KEY(PChar(GetIntStatName(i)));
           STAT_GET_INT(hash1, @u32, -1);
           stream.WriteDWord(hash1);
           stream.WriteDWord(u32);
         end;
-    stream.WriteDWord(cint(FloatStats.count));
-    for i := 0 to FloatStats.count - 1 do
+    stream.WriteDWord(cint(GetFloatStatCount));
+    for i := 0 to GetFloatStatCount - 1 do
         begin
-          hash1 := GET_HASH_KEY(PChar(FloatStats[i]));
+          hash1 := GET_HASH_KEY(PChar(GetFloatStatName(i)));
           STAT_GET_FLOAT(hash1, @cf, -1);
           stream.WriteDWord(hash1);
           stream.WriteDWord(PUINT32(@cf)^);
@@ -1954,10 +2110,10 @@ begin
   // Reset statistics
   if not _is_dll_init_final_ then
     begin
-      for i := 0 to IntStats.Count - 1 do
-          STAT_SET_INT(GET_HASH_KEY(PChar(IntStats[i])), DefaultStatsValues.ReadInteger('DefaultStatsValues', IntStats[i], 0), BOOL(1));
-      for i := 0 to FloatStats.Count - 1 do
-          STAT_SET_FLOAT(GET_HASH_KEY(PChar(FloatStats[i])), DefaultStatsValues.ReadFloat('DefaultStatsValues', FloatStats[i], 0.0), BOOL(1));
+      for i := 0 to GetIntStatCount - 1 do
+          STAT_SET_INT(GET_HASH_KEY(PChar(GetIntStatName(i))), GetIntStatDefaultValue(i), BOOL(1));
+      for i := 0 to GetFloatStatCount - 1 do
+          STAT_SET_FLOAT(GET_HASH_KEY(PChar(GetFloatStatName(i))), GetFloatStatDefaultValue(i), BOOL(1));
     end;
 end;
 
@@ -2128,13 +2284,9 @@ initialization
   _is_dll_init_final_ := true;
 
   QueryPerformanceFrequency(@pFreq);
-  DefaultFormatSettings.DecimalSeparator := '.';
-  IntStats := ReadRawData('yos_data/data/IntegerStatsList.dat');
-  FloatStats := ReadRawData('yos_data/data/FloatStatsList.dat');
   WeaponModels := ReadRawData('yos_data/data/WeaponsList.dat');
   WeaponCompModels := ReadRawData('yos_data/data/WeaponCompList.dat');
   MissionScript := TMissionScript.Create('yos_data/mission_script/main.yos');
-  DefaultStatsValues := TIniFile.Create('yos_data/data/DefaultStatsValues.dat');
 
   _is_dll_init_final_ := false;
 
@@ -2142,11 +2294,8 @@ finalization
   _is_dll_init_final_ := true;
 
   MissionScript.Free;
-  IntStats.Free;
-  FloatStats.Free;
   WeaponModels.Free;
   WeaponCompModels.Free;
-  DefaultStatsValues.Free;
 
 end.
 
