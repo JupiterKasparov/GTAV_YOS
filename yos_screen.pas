@@ -39,7 +39,7 @@ var
   GameScreen: TGameScreen;
 
 procedure PushMapNotification(msg: string);
-procedure DrawCustomTexture(filename: string; index, level, _time: integer; sizeX, sizeY, centerX, centerY, posX, posY, rotation, factor: real; r, g, b, a: byte);
+procedure DrawCustomTexture(fileName: string; sizeX, sizeY, posX, posY, ofsX, ofsY, rotation: cfloat; bCentered, bScaled: boolean; r, g, b, a: byte);
 procedure ClearCustomTextures;
 
 implementation
@@ -216,11 +216,14 @@ end;
 
 {%region /fold 'Public Helpers'}
 var
-  CustomTextures: array of record
-    TextureID: cint;
-    TextureFile: string;
+  CustTexFile: array of record
+    ID: cint;
+    FileName: string;
   end;
-
+  CustTexIndex, CustTexDraw: array of record
+    ID, Data: cint;
+  end;
+  CustTexGlobalLvl, CustTextGlobalLastFrame: cint;
 
 procedure PushMapNotification(msg: string);
 begin
@@ -229,41 +232,125 @@ begin
   END_TEXT_COMMAND_THEFEED_POST_TICKER(BOOL(0), BOOL(0));
 end;
 
-procedure DrawCustomTexture(filename: string; index, level, _time: integer; sizeX, sizeY, centerX, centerY, posX, posY, rotation, factor: real; r, g, b, a: byte);
+procedure DrawCustomTexture(fileName: string; sizeX, sizeY, posX, posY, ofsX, ofsY, rotation: cfloat; bCentered, bScaled: boolean; r, g, b, a: byte);
 var
-  i: integer;
-  loadfilename: string;
-  id: cint;
+  i, j: integer;
+  success: boolean;
+  id, frameCount, index: cint;
+  aspRatio, scaleX, scaleY, positionX, positionY: cfloat;
 begin
-  // Find texture ID from the cached list. If it exists, we don't need to load it again...
-  id := -1;
-  for i := 0 to High(CustomTextures) do
-      if (LowerCase(Trim(CustomTextures[i].TextureFile)) = LowerCase(Trim(filename))) then
+  // Register texture, if necessary
+  success := false;
+  for i := 0 to High(CustTexDraw) do
+      begin
+        if (LowerCase(fileName) = LowerCase(CustTexFile[i].FileName)) then
+           begin
+             success := true;
+             id := CustTexDraw[i].ID;
+             break;
+           end;
+      end;
+  if not success then
+     begin
+       if FileExists(fileName) then
+          begin
+            id := createTexture(PChar(fileName));
+            SetLength(CustTexFile, Length(CustTexFile) + 1);
+            CustTexFile[High(CustTexFile)].ID := id;
+            CustTexFile[High(CustTexFile)].FileName := fileName;
+          end
+       else
+          exit;
+     end;
+
+  // Register texture ID, if necessary
+  success := false;
+  for i := 0 to High(CustTexIndex) do
+      if (CustTexIndex[i].ID = id) then
          begin
-           id := CustomTextures[i].TextureID;
+           success := true;
            break;
          end;
-  // If we did not find a cached version, we must load it...
-  if (id <= 0) then
+  if not success then
      begin
-       loadfilename := Trim(filename);
-       if FileExists(loadfilename) then
-          begin
-            id := createTexture(PChar(loadfilename));
-            SetLength(CustomTextures, Length(CustomTextures) + 1);
-            i := High(CustomTextures);
-            CustomTextures[i].TextureID := id;
-            CustomTextures[i].TextureFile := loadfilename;
-          end;
+       SetLength(CustTexIndex, Length(CustTexIndex) + 1);
+       CustTexIndex[High(CustTexIndex)].ID := id;
+       CustTexIndex[High(CustTexIndex)].Data := 0;
+  end;
+
+  // Register texture draw, if necessary
+  success := false;
+  for i := 0 to High(CustTexDraw) do
+      if (CustTexDraw[i].ID = id) then
+         begin
+           success := true;
+           break;
+         end;
+  if not success then
+     begin
+       SetLength(CustTexDraw, Length(CustTexDraw) + 1);
+       CustTexDraw[High(CustTexDraw)].ID := id;
+       CustTexDraw[High(CustTexDraw)].Data := 0;
      end;
-  // If the texture is valid, we can dispaly it
-  if (id > 0) then
-     drawTexture(id, cint(index), cint(level), cint(_time), cfloat(sizex), cfloat(sizey), cfloat(centerx), cfloat(centery), cfloat(posx), cfloat(posy), cfloat(rotation), cfloat(factor), cfloat(r / 255.0), cfloat(g / 255.0), cfloat(b / 255.0), cfloat(a / 255.0));
+
+  // Setup texture draw (same approach as ScriptHookVDotNet CustomSprite)
+  frameCount := GET_FRAME_COUNT;
+  for i := 0 to High(CustTexDraw) do
+      if (CustTexDraw[i].ID = id) then
+         begin
+           if (CustTexDraw[i].Data <> frameCount) then
+              begin
+                for j := 0 to High(CustTexIndex) do
+                    if (CustTexIndex[j].ID = id) then
+                       begin
+                         CustTexIndex[j].Data := 0;
+                         break;
+                       end;
+                CustTexDraw[i].Data := frameCount;
+              end;
+           break;
+         end;
+  if (CustTextGlobalLastFrame <> frameCount) then
+     begin
+       CustTexGlobalLvl := 0;
+       CustTextGlobalLastFrame := frameCount;
+     end;
+  aspRatio := GET_ASPECT_RATIO(BOOL(0));
+  if bScaled then
+     scaleX := sizeX / (720.0 * aspRatio)
+  else
+     scaleX := sizeX / 1280.0;
+  scaleY := SizeY / 720.0;
+  if bScaled then
+     positionX := (posX + ofsX) / (720.0 * aspRatio)
+  else
+     positionX := (posX + ofsX) / 1280.0;
+  positionY := (posY + ofsY) / 720.0;
+  if bCentered then
+     begin
+       positionX := positionX + (scaleX * 0.5);
+       positionY := positionY + (scaleY * 0.5);
+     end;
+
+  // Draw the texture
+  for i := 0 to High(CustTexIndex) do
+      if (CustTexIndex[i].ID = id) then
+         begin
+           index := CustTexIndex[i].Data;
+           CustTexIndex[i].Data := index + 1;
+           break;
+         end;
+  CustTexGlobalLvl := CustTexGlobalLvl + 1;
+  drawTexture(id, index, CustTexGlobalLvl - 1, 100, scaleX, scaleY / aspRatio, 0.5, 0.5, positionX, positionY, rotation * 0.00277777778, aspRatio, r / 255.0, g / 255.0, b / 255.0, a / 255.0);
 end;
 
 procedure ClearCustomTextures;
 begin
-  SetLength(CustomTextures, 0);
+  SetLength(CustTexFile, 0);
+  SetLength(CustTexIndex, 0);
+  SetLength(CustTexDraw, 0);
+  CustTexGlobalLvl := 0;
+  CustTextGlobalLastFrame := 0;
 end;
 
 procedure TGameScreen.LoadSavegameInfo;
@@ -700,7 +787,7 @@ initialization
 finalization
   GameScreen.Free;
   ClearCustomTextures;
-  ClearMenuData
+  ClearMenuData;
 
 end.
 

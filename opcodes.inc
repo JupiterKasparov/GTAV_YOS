@@ -1610,33 +1610,30 @@ end;
 procedure scr_005A_draw_custom_texture(thread: TMissionThread; negateresult: boolean);
 var
   filename: string;
-  index, level, _time, r, g, b, a: cint;
-  sx, sy, cx, cy, x, y, rotation, factor: cfloat;
+  sx, sy, x, y, ox, oy, rotation: cfloat;
+  scaled, centered: boolean;
+  r, g, b, a: cint;
 begin
    {Param: 'filename'}
    filename := thread.GetNextParameterString;
-   {Param: 'index'}
-   index := thread.GetNextParameterInt;
-   {Param: 'level'}
-   level := thread.GetNextParameterInt;
-   {Param: 'time'}
-   _time := thread.GetNextParameterInt;
    {Param: 'x_size'}
    sx := thread.GetNextParameterFloat;
    {Param: 'y_size'}
    sy := thread.GetNextParameterFloat;
-   {Param: 'x_center'}
-   cx := thread.GetNextParameterFloat;
-   {Param: 'y_center'}
-   cy := thread.GetNextParameterFloat;
    {Param: 'x'}
    x := thread.GetNextParameterFloat;
    {Param: 'y'}
    y := thread.GetNextParameterFloat;
+   {Param: 'x_offset'}
+   ox := thread.GetNextParameterFloat;
+   {Param: 'y_offset'}
+   oy := thread.GetNextParameterFloat;
    {Param: 'rotation'}
    rotation := thread.GetNextParameterFloat;
-   {Param: 'factor'}
-   factor := thread.GetNextParameterFloat;
+   {Param: 'centered'}
+   centered := (thread.GetNextParameterInt <> 0);
+   {Param: 'scaled'}
+   scaled := (thread.GetNextParameterInt <> 0);
    {Param: 'r'}
    r := thread.GetNextParameterInt;
    {Param: 'g'}
@@ -1646,7 +1643,7 @@ begin
    {Param: 'a'}
    a := thread.GetNextParameterInt;
    {Draw texture}
-   DrawCustomTexture(filename, index, level, _time, sx, sy, cx, cy, x, y, rotation, factor, byte(r), byte(g), byte(b), byte(a));
+   DrawCustomTexture(filename, sx, sy, x, y, ox, oy, rotation, centered, scaled, r, g, b, a);
 end;
 
 {Print debug text}

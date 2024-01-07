@@ -17,6 +17,7 @@ begin
   worldInitComplete := false;
   isPlayerDead := false;
   isPlayerBusted := false;
+  ClearCustomTextures;
   SET_THIS_SCRIPT_CAN_BE_PAUSED(BOOL(0));
   SET_THIS_SCRIPT_CAN_REMOVE_BLIPS_CREATED_BY_ANY_SCRIPT(BOOL(1));
   while true do
