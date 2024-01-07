@@ -40,8 +40,6 @@
         <Filename Value="opcodes.inc"/>
         <IsPartOfProject Value="True"/>
         <EditorIndex Value="5"/>
-        <TopLine Value="784"/>
-        <CursorPos X="80" Y="818"/>
         <UsageCount Value="201"/>
         <Loaded Value="True"/>
       </Unit4>
@@ -90,117 +88,117 @@
         <UsageCount Value="48"/>
       </Unit10>
     </Units>
-    <JumpHistory Count="30" HistoryIndex="29">
+    <JumpHistory Count="29" HistoryIndex="28">
       <Position1>
         <Filename Value="yos_script.pas"/>
+        <Caret Line="2116" Column="80" TopLine="2082"/>
       </Position1>
       <Position2>
         <Filename Value="yos_script.pas"/>
-        <Caret Line="2116" Column="92" TopLine="2088"/>
       </Position2>
       <Position3>
-        <Filename Value="yos_screen.pas"/>
+        <Filename Value="yos_script.pas"/>
+        <Caret Line="107" Column="16" TopLine="72"/>
       </Position3>
       <Position4>
-        <Filename Value="opcodes.inc"/>
+        <Filename Value="yos_script.pas"/>
+        <Caret Line="108" Column="16" TopLine="73"/>
       </Position4>
       <Position5>
-        <Filename Value="yos_screen.pas"/>
+        <Filename Value="yos_script.pas"/>
+        <Caret Line="1124" Column="19" TopLine="1089"/>
       </Position5>
       <Position6>
-        <Filename Value="yos_screen.pas"/>
-        <Caret Line="684" Column="55" TopLine="673"/>
+        <Filename Value="yos_script.pas"/>
+        <Caret Line="1125" Column="19" TopLine="1090"/>
       </Position6>
       <Position7>
-        <Filename Value="yos_screen.pas"/>
-        <Caret Line="406" Column="12" TopLine="389"/>
+        <Filename Value="yos_script.pas"/>
+        <Caret Line="1189" Column="75" TopLine="1155"/>
       </Position7>
       <Position8>
         <Filename Value="yos_script.pas"/>
+        <Caret Line="1190" Column="75" TopLine="1156"/>
       </Position8>
       <Position9>
-        <Filename Value="yos_worldmanager.pas"/>
+        <Filename Value="yos_script.pas"/>
+        <Caret Line="8" Column="59"/>
       </Position9>
       <Position10>
-        <Filename Value="yos_worldmanager.pas"/>
-        <Caret Line="21" Column="38"/>
+        <Filename Value="opcodes.inc"/>
       </Position10>
       <Position11>
-        <Filename Value="yos_script.pas"/>
+        <Filename Value="opcodes.inc"/>
+        <Caret Line="1377" Column="91" TopLine="1355"/>
       </Position11>
       <Position12>
-        <Filename Value="yos_script.pas"/>
-        <Caret Line="25" Column="21"/>
+        <Filename Value="opcodes.inc"/>
+        <Caret Line="2093" Column="4" TopLine="2063"/>
       </Position12>
       <Position13>
-        <Filename Value="yos_script.pas"/>
-        <Caret Line="110" Column="13" TopLine="75"/>
+        <Filename Value="opcodes.inc"/>
+        <Caret Line="1377" Column="30" TopLine="1356"/>
       </Position13>
       <Position14>
-        <Filename Value="yos_script.pas"/>
-        <Caret Line="164" Column="31" TopLine="129"/>
+        <Filename Value="yos_screen.pas"/>
       </Position14>
       <Position15>
         <Filename Value="yos_script.pas"/>
-        <Caret Line="206" Column="35" TopLine="203"/>
       </Position15>
       <Position16>
         <Filename Value="yos_script.pas"/>
+        <Caret Line="742" Column="23" TopLine="716"/>
       </Position16>
       <Position17>
         <Filename Value="yos_script.pas"/>
-        <Caret Line="1746" Column="19" TopLine="1712"/>
+        <Caret Line="954" Column="23" TopLine="931"/>
       </Position17>
       <Position18>
         <Filename Value="yos_script.pas"/>
-        <Caret Line="1753" Column="19" TopLine="1719"/>
+        <Caret Line="976" Column="85" TopLine="949"/>
       </Position18>
       <Position19>
         <Filename Value="yos_script.pas"/>
+        <Caret Line="1153" Column="19" TopLine="1118"/>
       </Position19>
       <Position20>
         <Filename Value="yos_script.pas"/>
-        <Caret Line="2031" Column="42" TopLine="2003"/>
+        <Caret Line="1644" Column="41" TopLine="1614"/>
       </Position20>
       <Position21>
         <Filename Value="yos_script.pas"/>
-        <Caret Line="2115" Column="24" TopLine="2081"/>
+        <Caret Line="2070" Column="55" TopLine="2042"/>
       </Position21>
       <Position22>
         <Filename Value="yos_script.pas"/>
-        <Caret Line="2116" Column="80" TopLine="2082"/>
       </Position22>
       <Position23>
         <Filename Value="yos_script.pas"/>
+        <Caret Line="742" Column="23" TopLine="707"/>
       </Position23>
       <Position24>
         <Filename Value="yos_script.pas"/>
-        <Caret Line="107" Column="16" TopLine="72"/>
+        <Caret Line="954" Column="23" TopLine="919"/>
       </Position24>
       <Position25>
         <Filename Value="yos_script.pas"/>
-        <Caret Line="108" Column="16" TopLine="73"/>
+        <Caret Line="976" Column="25" TopLine="942"/>
       </Position25>
       <Position26>
         <Filename Value="yos_script.pas"/>
-        <Caret Line="1124" Column="19" TopLine="1089"/>
+        <Caret Line="1153" Column="19" TopLine="1118"/>
       </Position26>
       <Position27>
         <Filename Value="yos_script.pas"/>
-        <Caret Line="1125" Column="19" TopLine="1090"/>
+        <Caret Line="1644" Column="27" TopLine="1610"/>
       </Position27>
       <Position28>
-        <Filename Value="yos_script.pas"/>
-        <Caret Line="1189" Column="75" TopLine="1155"/>
+        <Filename Value="yos_worldmanager.pas"/>
       </Position28>
       <Position29>
-        <Filename Value="yos_script.pas"/>
-        <Caret Line="1190" Column="75" TopLine="1156"/>
+        <Filename Value="yos_worldmanager.pas"/>
+        <Caret Line="196" Column="19" TopLine="161"/>
       </Position29>
-      <Position30>
-        <Filename Value="yos_script.pas"/>
-        <Caret Line="8" Column="59"/>
-      </Position30>
     </JumpHistory>
   </ProjectSession>
 </CONFIG>

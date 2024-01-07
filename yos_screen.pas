@@ -605,7 +605,7 @@ begin
                  DRAW_RECT(0.5, 0.5, 1.0, 1.0, r, g, b, 128, BOOL(0));
                end
             else
-               DRAW_RECT(0.5, 0.5, 1.0, 1.0, 0, 0, 0, 255, BOOL(0));
+               DRAW_RECT(0.5, 0.5, 1.0, 1.0, 32, 32, 32, 255, BOOL(0));
 
             // Items
             for i := 0 to High(MenuItems) do

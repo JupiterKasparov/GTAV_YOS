@@ -971,9 +971,9 @@ begin
   REMOVE_ALL_PED_WEAPONS(actor, BOOL(0));
   for i := 0 to High(data.WeaponData.WeaponList) do
       begin
-        REQUEST_WEAPON_ASSET(data.WeaponData.WeaponList[i].HashCode, 31, 0);
         while (HAS_WEAPON_ASSET_LOADED(data.WeaponData.WeaponList[i].HashCode) = BOOL(0)) do
               begin
+                REQUEST_WEAPON_ASSET(data.WeaponData.WeaponList[i].HashCode, 31, 0);
                 GameScreen.DrawLoadingScreen;
                 ScriptHookVWait(0);
               end;
@@ -1639,9 +1639,9 @@ begin
         begin
           s := ReadCString(stream);
           enabledMaps.Add(s);
-          REQUEST_IPL(PChar(s));
           while (IS_IPL_ACTIVE(PChar(s)) = BOOL(0)) do
                 begin
+                  REQUEST_IPL(PChar(s));
                   GameScreen.DrawLoadingScreen;
                   ScriptHookVWait(0);
                 end;
@@ -2065,9 +2065,9 @@ begin
   if not _is_dll_init_final_ then
     for i := 0 to disabledMaps.Count - 1 do
         begin
-          REQUEST_IPL(PChar(disabledMaps[i]));
           while (IS_IPL_ACTIVE(PChar(disabledMaps[i])) = BOOL(0)) do
                 begin
+                  REQUEST_IPL(PChar(disabledMaps[i]));
                   GameScreen.DrawLoadingScreen;
                   ScriptHookVWait(0);
                 end;

@@ -1372,9 +1372,9 @@ begin
        data := @thread.script.storedPlayerData[index].Data;
        for i := 0 to High(data^.WeaponData.WeaponList) do
            begin
-             REQUEST_WEAPON_ASSET(data^.WeaponData.WeaponList[i].HashCode, 31, 0);
              while (HAS_WEAPON_ASSET_LOADED(data^.WeaponData.WeaponList[i].HashCode) = BOOL(0)) do
                    begin
+                     REQUEST_WEAPON_ASSET(data^.WeaponData.WeaponList[i].HashCode, 31, 0);
                      GameScreen.DrawLoadingScreen;
                      ScriptHookVWait(0);
                    end;
@@ -2084,15 +2084,12 @@ begin
      thread.script.disabledMaps.Delete(index);
    if (thread.script.enabledMaps.IndexOf(mapfile) < 0) then
      thread.script.enabledMaps.Add(mapfile);
-   if (IS_IPL_ACTIVE(PChar(mapfile)) = BOOL(0)) then
-     begin
-       REQUEST_IPL(PChar(mapfile));
-       while (IS_IPL_ACTIVE(PChar(mapfile)) = BOOL(0)) do
-             begin
-               GameScreen.DrawLoadingScreen;
-               ScriptHookVWait(0);
-             end;
-     end;
+   while (IS_IPL_ACTIVE(PChar(mapfile)) = BOOL(0)) do
+         begin
+           REQUEST_IPL(PChar(mapfile));
+           GameScreen.DrawLoadingScreen;
+           ScriptHookVWait(0);
+         end;
 end;
 
 {Disables a map file}
