@@ -1,10 +1,10 @@
 {%MainUnit yos_script.pas}
 
 type
-  TOpCodeHandler = procedure(thread: TMissionThread; negateresult: boolean);
+  TOpCodeHandler = procedure(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 
 {No Operation}
-procedure scr_0000_nop(thread: TMissionThread; negateresult: boolean);
+procedure scr_0000_nop(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 begin
    asm
       nop
@@ -12,7 +12,7 @@ begin
 end;
 
 {Wait X milliseconds}
-procedure scr_0001_wait(thread: TMissionThread; negateresult: boolean);
+procedure scr_0001_wait(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 begin
    {Param: 'time'}
    thread.waitTime := thread.GetNextParameterInt;
@@ -20,14 +20,14 @@ begin
 end;
 
 {Jump to label}
-procedure scr_0002_jump(thread: TMissionThread; negateresult: boolean);
+procedure scr_0002_jump(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 begin
    {Param: 'label'}
    thread.position := thread.script.bytes.ReadQWord - thread.offset;
 end;
 
 {Call a subroutine (label)}
-procedure scr_0003_gosub(thread: TMissionThread; negateresult: boolean);
+procedure scr_0003_gosub(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 begin
    {Param: 'label'}
    thread.gosubReturn[thread.gosubLevel] := thread.position + 8; {--->>> 8b label id}
@@ -36,7 +36,7 @@ begin
 end;
 
 {Return from a subroutine}
-procedure scr_0004_return(thread: TMissionThread; negateresult: boolean);
+procedure scr_0004_return(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 begin
    {Return from subroutine}
    thread.position := thread.gosubReturn[thread.gosubLevel - 1];
@@ -48,7 +48,7 @@ begin
 end;
 
 {Evaluate the conditional result, and jump to label, if the conditional result was false}
-procedure scr_0005_jump_if_false(thread: TMissionThread; negateresult: boolean);
+procedure scr_0005_jump_if_false(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   result: boolean;
   i: integer;
@@ -88,7 +88,7 @@ begin
 end;
 
 {Start a conditional block}
-procedure scr_0006_if(thread: TMissionThread; negateresult: boolean);
+procedure scr_0006_if(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 begin
    {Clear conditional values list}
    SetLength(thread.conditionalValues, 0);
@@ -98,20 +98,20 @@ begin
 end;
 
 {End caller thread}
-procedure scr_0007_end_thread(thread: TMissionThread; negateresult: boolean);
+procedure scr_0007_end_thread(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 begin
    thread.status := tstFinished;
 end;
 
 {End named thread}
-procedure scr_0008_end_named_thread(thread: TMissionThread; negateresult: boolean);
+procedure scr_0008_end_named_thread(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 begin
    {Param: 'name'}
    thread.script.KillThreadByName(thread.GetNextParameterString);
 end;
 
 {Create thread}
-procedure scr_0009_create_thread(thread: TMissionThread; negateresult: boolean);
+procedure scr_0009_create_thread(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   pos: UINT64;
 begin
@@ -122,14 +122,14 @@ begin
 end;
 
 {Set caller thread's name}
-procedure scr_000A_set_thread_name(thread: TMissionThread; negateresult: boolean);
+procedure scr_000A_set_thread_name(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 begin
    {Param: 'name'}
    thread.scriptName := thread.GetNextParameterString;
 end;
 
 {Reset a variable}
-procedure scr_000B_reset_variable(thread: TMissionThread; negateresult: boolean);
+procedure scr_000B_reset_variable(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   vloc: TVariableLocation;
   vid: word;
@@ -140,7 +140,7 @@ begin
 end;
 
 {Set var as int}
-procedure scr_000C_set_var_int(thread: TMissionThread; negateresult: boolean);
+procedure scr_000C_set_var_int(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   vloc: TVariableLocation;
   vid: word;
@@ -156,7 +156,7 @@ begin
 end;
 
 {Set var as float}
-procedure scr_000D_set_var_float(thread: TMissionThread; negateresult: boolean);
+procedure scr_000D_set_var_float(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   vloc: TVariableLocation;
   vid: word;
@@ -172,7 +172,7 @@ begin
 end;
 
 {Set var as string}
-procedure scr_000E_set_var_string(thread: TMissionThread; negateresult: boolean);
+procedure scr_000E_set_var_string(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   vloc: TVariableLocation;
   vid: word;
@@ -188,7 +188,7 @@ begin
 end;
 
 {Set var as Vector3}
-procedure scr_000F_set_var_vector3(thread: TMissionThread; negateresult: boolean);
+procedure scr_000F_set_var_vector3(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   vloc: TVariableLocation;
   vid: word;
@@ -210,7 +210,7 @@ begin
 end;
 
 {Set var as Array (numeric)}
-procedure scr_0010_set_var_array(thread: TMissionThread; negateresult: boolean);
+procedure scr_0010_set_var_array(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   vloc: TVariableLocation;
   vid: word;
@@ -230,7 +230,7 @@ begin
 end;
 
 {Set var as Array (string)}
-procedure scr_0011_set_var_stringlist(thread: TMissionThread; negateresult: boolean);
+procedure scr_0011_set_var_stringlist(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   vloc: TVariableLocation;
   vid: word;
@@ -250,7 +250,7 @@ begin
 end;
 
 {Set a Vector3's X}
-procedure scr_0012_set_vector3_x(thread: TMissionThread; negateresult: boolean);
+procedure scr_0012_set_vector3_x(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   vloc: TVariableLocation;
   vid: word;
@@ -265,7 +265,7 @@ begin
 end;
 
 {Set a Vector3's Y}
-procedure scr_0013_set_vector3_y(thread: TMissionThread; negateresult: boolean);
+procedure scr_0013_set_vector3_y(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   vloc: TVariableLocation;
   vid: word;
@@ -280,7 +280,7 @@ begin
 end;
 
 {Set a Vector3's Z}
-procedure scr_0014_set_vector3_z(thread: TMissionThread; negateresult: boolean);
+procedure scr_0014_set_vector3_z(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   vloc: TVariableLocation;
   vid: word;
@@ -295,7 +295,7 @@ begin
 end;
 
 {Get a Vector3's X}
-procedure scr_0015_get_vector3_x(thread: TMissionThread; negateresult: boolean);
+procedure scr_0015_get_vector3_x(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   vloc1, vloc2: TVariableLocation;
   vid1, vid2: word;
@@ -310,7 +310,7 @@ begin
 end;
 
 {Get a Vector3's Y}
-procedure scr_0016_get_vector3_y(thread: TMissionThread; negateresult: boolean);
+procedure scr_0016_get_vector3_y(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   vloc1, vloc2: TVariableLocation;
   vid1, vid2: word;
@@ -325,7 +325,7 @@ begin
 end;
 
 {Get a Vector3's Z}
-procedure scr_0017_get_vector3_z(thread: TMissionThread; negateresult: boolean);
+procedure scr_0017_get_vector3_z(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   vloc1, vloc2: TVariableLocation;
   vid1, vid2: word;
@@ -340,7 +340,7 @@ begin
 end;
 
 {Set an array (numeric) item as int}
-procedure scr_0018_set_array_item_int(thread: TMissionThread; negateresult: boolean);
+procedure scr_0018_set_array_item_int(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   vloc: TVariableLocation;
   vid: word;
@@ -356,7 +356,7 @@ begin
 end;
 
 {Get an array (numeric) item as int}
-procedure scr_0019_get_array_item_int(thread: TMissionThread; negateresult: boolean);
+procedure scr_0019_get_array_item_int(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   vloc1, vloc2: TVariableLocation;
   vid1, vid2: word;
@@ -374,7 +374,7 @@ begin
 end;
 
 {Add a new int item to an array (numeric)}
-procedure scr_001A_add_array_item_int(thread: TMissionThread; negateresult: boolean);
+procedure scr_001A_add_array_item_int(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   vloc: TVariableLocation;
   vid: word;
@@ -391,7 +391,7 @@ begin
 end;
 
 {Set an array (numeric) item as float}
-procedure scr_001B_set_array_item_float(thread: TMissionThread; negateresult: boolean);
+procedure scr_001B_set_array_item_float(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   vloc: TVariableLocation;
   vid: word;
@@ -409,7 +409,7 @@ begin
 end;
 
 {Get an array (numeric) item as float}
-procedure scr_001C_get_array_item_float(thread: TMissionThread; negateresult: boolean);
+procedure scr_001C_get_array_item_float(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   vloc1, vloc2: TVariableLocation;
   vid1, vid2: word;
@@ -427,7 +427,7 @@ begin
 end;
 
 {Add a new float item to an array (numeric)}
-procedure scr_001D_add_array_item_float(thread: TMissionThread; negateresult: boolean);
+procedure scr_001D_add_array_item_float(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   vloc: TVariableLocation;
   vid: word;
@@ -445,7 +445,7 @@ begin
 end;
 
 {Remove an item from an array (numeric)}
-procedure scr_001E_remove_array_item(thread: TMissionThread; negateresult: boolean);
+procedure scr_001E_remove_array_item(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   vloc: TVariableLocation;
   vid: word;
@@ -468,7 +468,7 @@ begin
 end;
 
 {Get the length of an array (numeric)}
-procedure scr_001F_get_array_length(thread: TMissionThread; negateresult: boolean);
+procedure scr_001F_get_array_length(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   vloc1, vloc2: TVariableLocation;
   vid1, vid2: word;
@@ -483,7 +483,7 @@ begin
 end;
 
 {Set array (numeric) length}
-procedure scr_0020_set_array_length(thread: TMissionThread; negateresult: boolean);
+procedure scr_0020_set_array_length(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   vloc: TVariableLocation;
   vid: word;
@@ -498,7 +498,7 @@ begin
 end;
 
 {Set an array (string) item}
-procedure scr_0021_set_stringlist_item(thread: TMissionThread; negateresult: boolean);
+procedure scr_0021_set_stringlist_item(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   vloc: TVariableLocation;
   vid: word;
@@ -513,7 +513,7 @@ begin
 end;
 
 {Get an array (string) item}
-procedure scr_0022_get_stringlist_item(thread: TMissionThread; negateresult: boolean);
+procedure scr_0022_get_stringlist_item(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   vloc1, vloc2: TVariableLocation;
   vid1, vid2: word;
@@ -521,6 +521,7 @@ var
 begin
    {Param: 'result'}
    thread.GetVarId(vloc1, vid1);
+   thread.ClearVariable(vloc1, vid1);
    {Param: 'stringlist_var'}
    thread.GetVarId(vloc2, vid2);
    {Param: 'index'}
@@ -530,7 +531,7 @@ begin
 end;
 
 {Add a new item to an array (string)}
-procedure scr_0023_add_stringlist_item(thread: TMissionThread; negateresult: boolean);
+procedure scr_0023_add_stringlist_item(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   vloc: TVariableLocation;
   vid: word;
@@ -548,7 +549,7 @@ begin
 end;
 
 {Remove an item from an array (string)}
-procedure scr_0024_remove_stringlist_item(thread: TMissionThread; negateresult: boolean);
+procedure scr_0024_remove_stringlist_item(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   vloc: TVariableLocation;
   vid: word;
@@ -569,7 +570,7 @@ begin
 end;
 
 {Get the length of an array (string)}
-procedure scr_0025_get_stringlist_count(thread: TMissionThread; negateresult: boolean);
+procedure scr_0025_get_stringlist_count(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   vloc1, vloc2: TVariableLocation;
   vid1, vid2: word;
@@ -584,7 +585,7 @@ begin
 end;
 
 {Set array (string) length}
-procedure scr_0026_set_stringlist_count(thread: TMissionThread; negateresult: boolean);
+procedure scr_0026_set_stringlist_count(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   vloc: TVariableLocation;
   vid: word;
@@ -605,7 +606,7 @@ begin
 end;
 
 {v -= i}
-procedure scr_0027_sub_var_int(thread: TMissionThread; negateresult: boolean);
+procedure scr_0027_sub_var_int(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   vloc: TVariableLocation;
   vid: word;
@@ -627,7 +628,7 @@ begin
 end;
 
 {v -= f}
-procedure scr_0028_sub_var_float(thread: TMissionThread; negateresult: boolean);
+procedure scr_0028_sub_var_float(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   vloc: TVariableLocation;
   vid: word;
@@ -649,7 +650,7 @@ begin
 end;
 
 {v += i}
-procedure scr_0029_add_var_int(thread: TMissionThread; negateresult: boolean);
+procedure scr_0029_add_var_int(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   vloc: TVariableLocation;
   vid: word;
@@ -671,7 +672,7 @@ begin
 end;
 
 {v += f}
-procedure scr_002A_add_var_float(thread: TMissionThread; negateresult: boolean);
+procedure scr_002A_add_var_float(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   vloc: TVariableLocation;
   vid: word;
@@ -693,7 +694,7 @@ begin
 end;
 
 {v *= i}
-procedure scr_002B_mul_var_int(thread: TMissionThread; negateresult: boolean);
+procedure scr_002B_mul_var_int(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   vloc: TVariableLocation;
   vid: word;
@@ -715,7 +716,7 @@ begin
 end;
 
 {v *= f}
-procedure scr_002C_mul_var_float(thread: TMissionThread; negateresult: boolean);
+procedure scr_002C_mul_var_float(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   vloc: TVariableLocation;
   vid: word;
@@ -737,7 +738,7 @@ begin
 end;
 
 {v /= i}
-procedure scr_002D_div_var_int(thread: TMissionThread; negateresult: boolean);
+procedure scr_002D_div_var_int(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   vloc: TVariableLocation;
   vid: word;
@@ -762,7 +763,7 @@ begin
 end;
 
 {v /= f}
-procedure scr_002E_div_var_float(thread: TMissionThread; negateresult: boolean);
+procedure scr_002E_div_var_float(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   vloc: TVariableLocation;
   vid: word;
@@ -787,7 +788,7 @@ begin
 end;
 
 {Convert int to string}
-procedure scr_002F_convert_int_to_string(thread: TMissionThread; negateresult: boolean);
+procedure scr_002F_convert_int_to_string(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   vloc: TVariableLocation;
   vid: word;
@@ -803,7 +804,7 @@ begin
 end;
 
 {Convert float to string}
-procedure scr_0030_convert_float_to_string(thread: TMissionThread; negateresult: boolean);
+procedure scr_0030_convert_float_to_string(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   vloc: TVariableLocation;
   vid: word;
@@ -819,7 +820,7 @@ begin
 end;
 
 {Concat strings}
-procedure scr_0031_concat_string(thread: TMissionThread; negateresult: boolean);
+procedure scr_0031_concat_string(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   vloc: TVariableLocation;
   vid: word;
@@ -832,7 +833,10 @@ begin
    stringValue := thread.GetNextParameterString;
    {String concat}
    if (thread.GetVarType(vloc, vid) <> svtString) then
-     thread.AllocateString(vloc, vid, '');
+     begin
+       thread.ClearVariable(vloc, vid);
+       thread.AllocateString(vloc, vid, '');
+     end;
    if (thread.GetVarType(vloc, vid) = svtString) then // Was the string allocation successful? (if it was already a string, then we're still OK)
      begin
        stringIndex := thread.GetVarInt(vloc, vid);
@@ -841,7 +845,7 @@ begin
 end;
 
 {Get string length}
-procedure scr_0032_get_string_length(thread: TMissionThread; negateresult: boolean);
+procedure scr_0032_get_string_length(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   vloc: TVariableLocation;
   vid: word;
@@ -857,7 +861,7 @@ begin
 end;
 
 {Get string char code at index}
-procedure scr_0033_get_string_char_code_at_index(thread: TMissionThread; negateresult: boolean);
+procedure scr_0033_get_string_char_code_at_index(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   vloc: TVariableLocation;
   vid: word;
@@ -879,7 +883,7 @@ begin
 end;
 
 {Substring}
-procedure scr_0034_substring(thread: TMissionThread; negateresult: boolean);
+procedure scr_0034_substring(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   vloc: TVariableLocation;
   vid: word;
@@ -908,7 +912,7 @@ begin
 end;
 
 {i1 > i2}
-procedure scr_0035_cmp_gt_int_int(thread: TMissionThread; negateresult: boolean);
+procedure scr_0035_cmp_gt_int_int(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   i1, i2: cint;
 begin
@@ -921,7 +925,7 @@ begin
 end;
 
 {i > f}
-procedure scr_0036_cmp_gt_int_float(thread: TMissionThread; negateresult: boolean);
+procedure scr_0036_cmp_gt_int_float(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   i: cint;
   f: cfloat;
@@ -935,7 +939,7 @@ begin
 end;
 
 {f1 > f2}
-procedure scr_0037_cmp_gt_float_float(thread: TMissionThread; negateresult: boolean);
+procedure scr_0037_cmp_gt_float_float(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   f1, f2: cfloat;
 begin
@@ -948,7 +952,7 @@ begin
 end;
 
 {i1 >= i2}
-procedure scr_0038_cmp_ge_int_int(thread: TMissionThread; negateresult: boolean);
+procedure scr_0038_cmp_ge_int_int(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   i1, i2: cint;
 begin
@@ -961,7 +965,7 @@ begin
 end;
 
 {i >= f}
-procedure scr_0039_cmp_ge_int_float(thread: TMissionThread; negateresult: boolean);
+procedure scr_0039_cmp_ge_int_float(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   i: cint;
   f: cfloat;
@@ -975,7 +979,7 @@ begin
 end;
 
 {f1 >= f2}
-procedure scr_003A_cmp_ge_float_float(thread: TMissionThread; negateresult: boolean);
+procedure scr_003A_cmp_ge_float_float(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   f1, f2: cfloat;
 begin
@@ -988,7 +992,7 @@ begin
 end;
 
 {i1 = i2}
-procedure scr_003B_cmp_eq_int_int(thread: TMissionThread; negateresult: boolean);
+procedure scr_003B_cmp_eq_int_int(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   i1, i2: cint;
 begin
@@ -1001,7 +1005,7 @@ begin
 end;
 
 {i = f}
-procedure scr_003C_cmp_eq_int_float(thread: TMissionThread; negateresult: boolean);
+procedure scr_003C_cmp_eq_int_float(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   i: cint;
   f: cfloat;
@@ -1015,7 +1019,7 @@ begin
 end;
 
 {f1 = f2}
-procedure scr_003D_cmp_eq_float_float(thread: TMissionThread; negateresult: boolean);
+procedure scr_003D_cmp_eq_float_float(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   f1, f2: cfloat;
 begin
@@ -1028,7 +1032,7 @@ begin
 end;
 
 {Get var type}
-procedure scr_003E_get_var_type(thread: TMissionThread; negateresult: boolean);
+procedure scr_003E_get_var_type(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   vloc1, vloc2: TVariableLocation;
   vid1, vid2: word;
@@ -1043,7 +1047,7 @@ begin
 end;
 
 {Get number of free slots for a given var data type}
-procedure scr_003F_get_managed_data_type_free_slots(thread: TMissionThread; negateresult: boolean);
+procedure scr_003F_get_managed_data_type_free_slots(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   vloc: TVariableLocation;
   vid: word;
@@ -1103,14 +1107,14 @@ begin
 end;
 
 {Set float equal check threshold}
-procedure scr_0040_set_float_epsilon(thread: TMissionThread; negateresult: boolean);
+procedure scr_0040_set_float_epsilon(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 begin
    {Param: 'epsilon'}
    thread.script.floatEqualThreshold := thread.GetNextParameterFloat;
 end;
 
 {Get YOS version (major and minor)}
-procedure scr_0041_get_script_engine_version(thread: TMissionThread; negateresult: boolean);
+procedure scr_0041_get_script_engine_version(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   vloc: TVariableLocation;
   vid: word;
@@ -1133,7 +1137,7 @@ begin
 end;
 
 {Call GTA5 native}
-procedure scr_0042_call_native(thread: TMissionThread; negateresult: boolean);
+procedure scr_0042_call_native(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   nativeHash: UINT64;
   nativeParamCount: byte;
@@ -1223,7 +1227,7 @@ begin
 end;
 
 {Get GTA5 native result as int}
-procedure scr_0043_get_native_result_int(thread: TMissionThread; negateresult: boolean);
+procedure scr_0043_get_native_result_int(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   vloc: TVariableLocation;
   vid: word;
@@ -1240,7 +1244,7 @@ begin
 end;
 
 {Get GTA5 native result as float}
-procedure scr_0044_get_native_result_float(thread: TMissionThread; negateresult: boolean);
+procedure scr_0044_get_native_result_float(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   vloc: TVariableLocation;
   vid: word;
@@ -1257,7 +1261,7 @@ begin
 end;
 
 {Get GTA5 native result as Vector3}
-procedure scr_0045_get_native_result_vector3(thread: TMissionThread; negateresult: boolean);
+procedure scr_0045_get_native_result_vector3(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   vloc: TVariableLocation;
   vid: word;
@@ -1286,7 +1290,7 @@ begin
 end;
 
 {Get GTA5 native result as string}
-procedure scr_0046_get_native_result_string(thread: TMissionThread; negateresult: boolean);
+procedure scr_0046_get_native_result_string(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   vloc: TVariableLocation;
   vid: word;
@@ -1303,7 +1307,7 @@ begin
 end;
 
 {Get internal player index}
-procedure scr_0047_get_internal_player_index(thread: TMissionThread; negateresult: boolean);
+procedure scr_0047_get_internal_player_index(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   vloc: TVariableLocation;
   vid: word;
@@ -1318,13 +1322,13 @@ begin
 end;
 
 {Puts back the player at the default starting location, on a jet-ski}
-procedure scr_0048_reset_player_location(thread: TMissionThread; negateresult: boolean);
+procedure scr_0048_reset_player_location(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 begin
    ResetPlayerLocation;
 end;
 
 {Clear stored vehicle for current player}
-procedure scr_0049_clear_stored_vehicle_for_player(thread: TMissionThread; negateresult: boolean);
+procedure scr_0049_clear_stored_vehicle_for_player(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   index: integer;
 begin
@@ -1337,7 +1341,7 @@ begin
 end;
 
 {Clear stored location for current player}
-procedure scr_004A_reset_stored_location_for_player(thread: TMissionThread; negateresult: boolean);
+procedure scr_004A_reset_stored_location_for_player(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   index: integer;
   playerPed: Ped;
@@ -1356,7 +1360,7 @@ begin
 end;
 
 {Gives stored player weapons to a ped (with a valid player model)}
-procedure scr_004B_give_stored_player_weapons_for_ped(thread: TMissionThread; negateresult: boolean);
+procedure scr_004B_give_stored_player_weapons_for_ped(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   actor: Ped;
   index, i, j: integer;
@@ -1388,7 +1392,7 @@ begin
 end;
 
 {Store current player}
-procedure scr_004C_store_player(thread: TMissionThread; negateresult: boolean);
+procedure scr_004C_store_player(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   index: integer;
 begin
@@ -1401,7 +1405,7 @@ begin
 end;
 
 {Restore current player}
-procedure scr_004D_restore_player(thread: TMissionThread; negateresult: boolean);
+procedure scr_004D_restore_player(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   index: integer;
 begin
@@ -1411,7 +1415,7 @@ begin
 end;
 
 {Add hospital restart}
-procedure scr_004E_add_hospital_restart(thread: TMissionThread; negateresult: boolean);
+procedure scr_004E_add_hospital_restart(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   x, y, z, a: cfloat;
   h: integer;
@@ -1434,7 +1438,7 @@ begin
 end;
 
 {Remove closest hospital restart}
-procedure scr_004F_remove_closest_hospital_restart(thread: TMissionThread; negateresult: boolean);
+procedure scr_004F_remove_closest_hospital_restart(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   x, y, z, xd, yd, zd, mindiff, diff: cfloat;
   index, i: integer;
@@ -1470,7 +1474,7 @@ begin
 end;
 
 {Add police restart}
-procedure scr_0050_add_police_restart(thread: TMissionThread; negateresult: boolean);
+procedure scr_0050_add_police_restart(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   x, y, z, a: cfloat;
   h: integer;
@@ -1493,7 +1497,7 @@ begin
 end;
 
 {Remove closest hospital restart}
-procedure scr_0051_remove_closest_police_restart(thread: TMissionThread; negateresult: boolean);
+procedure scr_0051_remove_closest_police_restart(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   x, y, z, xd, yd, zd, mindiff, diff: cfloat;
   index, i: integer;
@@ -1529,7 +1533,7 @@ begin
 end;
 
 {Set an override restart location}
-procedure scr_0052_set_override_restart(thread: TMissionThread; negateresult: boolean);
+procedure scr_0052_set_override_restart(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   x, y, z, a: cfloat;
 begin
@@ -1550,33 +1554,33 @@ begin
 end;
 
 {Cancel override restart}
-procedure scr_0053_cancel_override_restart(thread: TMissionThread; negateresult: boolean);
+procedure scr_0053_cancel_override_restart(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 begin
    thread.script.useOverrideRestart := false;
 end;
 
 {Set mission flag}
-procedure scr_0054_set_mission_flag(thread: TMissionThread; negateresult: boolean);
+procedure scr_0054_set_mission_flag(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 begin
    {Param: 'flag'}
    thread.script.isOnMission := (thread.GetNextParameterInt <> 0);
 end;
 
 {Get, if currently on mission}
-procedure scr_0055_is_on_mission(thread: TMissionThread; negateresult: boolean);
+procedure scr_0055_is_on_mission(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 begin
    thread.AddConditionalResult(thread.script.isOnMission, negateresult);
 end;
 
 {Get (once only), if the current thread was loaded from a savegame}
-procedure scr_0056_is_saved_game_loaded(thread: TMissionThread; negateresult: boolean);
+procedure scr_0056_is_saved_game_loaded(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 begin
    thread.AddConditionalResult(thread.isSavedGame, negateresult);
    thread.isSavedGame := false;
 end;
 
 {Show 'Save Game' screen}
-procedure scr_0057_show_save_screen(thread: TMissionThread; negateresult: boolean);
+procedure scr_0057_show_save_screen(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   i: integer;
 begin
@@ -1594,20 +1598,20 @@ begin
 end;
 
 {Set the latest mission name}
-procedure scr_0058_set_latest_mission_name(thread: TMissionThread; negateresult: boolean);
+procedure scr_0058_set_latest_mission_name(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 begin
    {Param: 'name'}
    thread.script.lastMission := thread.GetNextParameterString;
 end;
 
 {Yield execution to ScriptHookV now!}
-procedure scr_0059_process_game_events(thread: TMissionThread; negateresult: boolean);
+procedure scr_0059_process_game_events(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 begin
    ScriptHookVWait(0);
 end;
 
 {Draw a custom texture}
-procedure scr_005A_draw_custom_texture(thread: TMissionThread; negateresult: boolean);
+procedure scr_005A_draw_custom_texture(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   filename: string;
   sx, sy, x, y, ox, oy, rotation: cfloat;
@@ -1647,7 +1651,7 @@ begin
 end;
 
 {Print debug text}
-procedure scr_005B_debug_text(thread: TMissionThread; negateresult: boolean);
+procedure scr_005B_debug_text(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   dbg_text: string;
 begin
@@ -1659,19 +1663,19 @@ begin
 end;
 
 {Conditional: FALSE}
-procedure scr_005C_false(thread: TMissionThread; negateresult: boolean);
+procedure scr_005C_false(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 begin
    thread.AddConditionalResult(false, negateresult);
 end;
 
 {Conditional: TRUE}
-procedure scr_005D_true(thread: TMissionThread; negateresult: boolean);
+procedure scr_005D_true(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 begin
    thread.AddConditionalResult(true, negateresult);
 end;
 
 {Clears all mission blips}
-procedure scr_005E_clear_mission_blips(thread: TMissionThread; negateresult: boolean);
+procedure scr_005E_clear_mission_blips(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   i: integer;
   b, next: Blip;
@@ -1690,7 +1694,7 @@ begin
 end;
 
 {Gets, if the Blip with the given handle is a YOS managed blip}
-procedure scr_005F_is_blip_managed(thread: TMissionThread; negateresult: boolean);
+procedure scr_005F_is_blip_managed(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   handle: Blip;
 begin
@@ -1701,7 +1705,7 @@ begin
 end;
 
 {Creates a radius-type blip}
-procedure scr_0060_add_blip_with_radius(thread: TMissionThread; negateresult: boolean);
+procedure scr_0060_add_blip_with_radius(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   vloc: TVariableLocation;
   vid: word;
@@ -1745,7 +1749,7 @@ begin
 end;
 
 {Creates an icon-type blip}
-procedure scr_0061_add_blip_with_icon(thread: TMissionThread; negateresult: boolean);
+procedure scr_0061_add_blip_with_icon(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   vloc: TVariableLocation;
   vid: word;
@@ -1786,7 +1790,7 @@ begin
 end;
 
 {Set a blip selectable or unselectable}
-procedure scr_0062_set_blip_selectable(thread: TMissionThread; negateresult: boolean);
+procedure scr_0062_set_blip_selectable(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   vloc: TVariableLocation;
   vid: word;
@@ -1804,7 +1808,7 @@ begin
 end;
 
 {Set a blip to be visible or hidden during missions}
-procedure scr_0063_set_blip_visible_during_missions(thread: TMissionThread; negateresult: boolean);
+procedure scr_0063_set_blip_visible_during_missions(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   vloc: TVariableLocation;
   vid: word;
@@ -1822,7 +1826,7 @@ begin
 end;
 
 {Set a blip to be visible or hidden ,when player gets too far}
-procedure scr_0064_set_blip_visible_at_minimap_edges(thread: TMissionThread; negateresult: boolean);
+procedure scr_0064_set_blip_visible_at_minimap_edges(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   vloc: TVariableLocation;
   vid: word;
@@ -1840,7 +1844,7 @@ begin
 end;
 
 {Set a blip's color}
-procedure scr_0065_set_blip_color(thread: TMissionThread; negateresult: boolean);
+procedure scr_0065_set_blip_color(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   vloc: TVariableLocation;
   vid: word;
@@ -1858,7 +1862,7 @@ begin
 end;
 
 {Clears all mission pickups}
-procedure scr_0066_clear_mission_pickups(thread: TMissionThread; negateresult: boolean);
+procedure scr_0066_clear_mission_pickups(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   i: integer;
   worldObjectCount: cint;
@@ -1875,7 +1879,7 @@ begin
 end;
 
 {Gets, if the Pickup with the given handle is a YOS managed pickup}
-procedure scr_0067_is_pickup_managed(thread: TMissionThread; negateresult: boolean);
+procedure scr_0067_is_pickup_managed(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   handle: Pickup;
 begin
@@ -1886,7 +1890,7 @@ begin
 end;
 
 {Creates a spinning pickup}
-procedure scr_0068_create_pickup(thread: TMissionThread; negateresult: boolean);
+procedure scr_0068_create_pickup(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   vloc: TVariableLocation;
   vid: word;
@@ -1933,7 +1937,7 @@ begin
 end;
 
 {Creates a static pickup}
-procedure scr_0069_create_rotated_pickup(thread: TMissionThread; negateresult: boolean);
+procedure scr_0069_create_rotated_pickup(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   vloc: TVariableLocation;
   vid: word;
@@ -1989,7 +1993,7 @@ begin
 end;
 
 {Gets, if the Pickup has been picked up, and didn't regenerate yet!}
-procedure scr_006A_has_pickup_been_picked_up(thread: TMissionThread; negateresult: boolean);
+procedure scr_006A_has_pickup_been_picked_up(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   vloc: TVariableLocation;
   vid: word;
@@ -2001,7 +2005,7 @@ begin
 end;
 
 {Clears all mission objects}
-procedure scr_006B_clear_mission_objects(thread: TMissionThread; negateresult: boolean);
+procedure scr_006B_clear_mission_objects(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   i: integer;
   worldObjectCount: cint;
@@ -2017,7 +2021,7 @@ begin
 end;
 
 {Gets, if the Object with the given handle is registered to be managed by YOS}
-procedure scr_006C_is_object_managed(thread: TMissionThread; negateresult: boolean);
+procedure scr_006C_is_object_managed(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   handle: GTAObject;
 begin
@@ -2028,7 +2032,7 @@ begin
 end;
 
 {Registers an object to be managed by YOS}
-procedure scr_006D_register_object_for_management(thread: TMissionThread; negateresult: boolean);
+procedure scr_006D_register_object_for_management(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   vloc: TVariableLocation;
   vid: word;
@@ -2053,7 +2057,7 @@ begin
 end;
 
 {Gets a managed object's handle}
-procedure scr_006E_get_managed_object_handle(thread: TMissionThread; negateresult: boolean);
+procedure scr_006E_get_managed_object_handle(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   vloc1, vloc2: TVariableLocation;
   vid1, vid2: word;
@@ -2068,7 +2072,7 @@ begin
 end;
 
 {Enables a map file}
-procedure scr_006F_enable_map_file(thread: TMissionThread; negateresult: boolean);
+procedure scr_006F_enable_map_file(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   mapfile: string;
   index: integer;
@@ -2090,7 +2094,7 @@ begin
 end;
 
 {Disables a map file}
-procedure scr_0070_disable_map_file(thread: TMissionThread; negateresult: boolean);
+procedure scr_0070_disable_map_file(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   mapfile: string;
   index: integer;
@@ -2108,7 +2112,7 @@ begin
 end;
 
 {Memorizes cars from a cube}
-procedure scr_0071_store_cars_from_cube(thread: TMissionThread; negateresult: boolean);
+procedure scr_0071_store_cars_from_cube(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   x1, y1, z1, x2, y2, z2: cfloat;
   i, j: integer;
@@ -2164,7 +2168,7 @@ begin
 end;
 
 {Spawns all memorized cars within a cube}
-procedure scr_0072_spawn_stored_cars_in_cube(thread: TMissionThread; negateresult: boolean);
+procedure scr_0072_spawn_stored_cars_in_cube(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   x1, y1, z1, x2, y2, z2: cfloat;
   i: integer;
@@ -2192,7 +2196,7 @@ begin
 end;
 
 {Forgets all stored cars within a cube}
-procedure scr_0073_forget_stored_cars_in_cube(thread: TMissionThread; negateresult: boolean);
+procedure scr_0073_forget_stored_cars_in_cube(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   x1, y1, z1, x2, y2, z2: cfloat;
   i, j: integer;
@@ -2220,7 +2224,7 @@ begin
 end;
 
 {Reset timer}
-procedure scr_0074_reset_timer(thread: TMissionThread; negateresult: boolean);
+procedure scr_0074_reset_timer(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   index: cint;
 begin
@@ -2232,7 +2236,7 @@ begin
 end;
 
 {Get timer}
-procedure scr_0075_get_timer(thread: TMissionThread; negateresult: boolean);
+procedure scr_0075_get_timer(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   vloc: TVariableLocation;
   vid: word;
@@ -2251,7 +2255,7 @@ begin
 end;
 
 {Call a subroutine (label) with automatic wasted-busted return option}
-procedure scr_0076_gosub_with_auto_wasted_busted_return(thread: TMissionThread; negateresult: boolean);
+procedure scr_0076_gosub_with_auto_wasted_busted_return(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   returnpos: INT64;
 begin
@@ -2272,13 +2276,13 @@ begin
 end;
 
 {Cancel an automatic wasted-busted return option for thread}
-procedure scr_0077_cancel_auto_wasted_busted_return(thread: TMissionThread; negateresult: boolean);
+procedure scr_0077_cancel_auto_wasted_busted_return(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 begin
    thread.wbGosubActive := false;
 end;
 
 {Create a forbidden for cars cube}
-procedure scr_0078_create_forbidden_for_cars_cube(thread: TMissionThread; negateresult: boolean);
+procedure scr_0078_create_forbidden_for_cars_cube(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   vloc: TVariableLocation;
   vid: word;
@@ -2318,7 +2322,7 @@ begin
           end;
 end;
 
-procedure scr_0079_create_forbidden_for_peds_cube(thread: TMissionThread; negateresult: boolean);
+procedure scr_0079_create_forbidden_for_peds_cube(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   vloc: TVariableLocation;
   vid: word;
@@ -2359,7 +2363,7 @@ begin
 end;
 
 {Gets, if the Car Generator with the given handle is a YOS managed car generator}
-procedure scr_007A_is_car_generator_managed(thread: TMissionThread; negateresult: boolean);
+procedure scr_007A_is_car_generator_managed(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   handle: cint;
   i: integer;
@@ -2378,7 +2382,7 @@ begin
    thread.AddConditionalResult(result, negateresult);
 end;
 
-procedure scr_007B_create_car_generator(thread: TMissionThread; negateresult: boolean);
+procedure scr_007B_create_car_generator(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   vloc: TVariableLocation;
   vid: word;
@@ -2416,7 +2420,7 @@ begin
           end;
 end;
 
-procedure scr_007C_set_car_generator_active(thread: TMissionThread; negateresult: boolean);
+procedure scr_007C_set_car_generator_active(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   vloc: TVariableLocation;
   vid: word;
@@ -2444,7 +2448,7 @@ begin
 end;
 
 {Memorizes cars from an angled cube}
-procedure scr_007D_store_cars_from_angled_cube(thread: TMissionThread; negateresult: boolean);
+procedure scr_007D_store_cars_from_angled_cube(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   x1, y1, z1, x2, y2, z2, a: cfloat;
   i, j: integer;
@@ -2502,7 +2506,7 @@ begin
 end;
 
 {Spawns all memorized cars within an angled cube}
-procedure scr_007E_spawn_stored_cars_in_angled_cube(thread: TMissionThread; negateresult: boolean);
+procedure scr_007E_spawn_stored_cars_in_angled_cube(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   x1, y1, z1, x2, y2, z2, a: cfloat;
   i: integer;
@@ -2532,7 +2536,7 @@ begin
 end;
 
 {Forgets all stored cars within an angled cube}
-procedure scr_007F_forget_stored_cars_in_angled_cube(thread: TMissionThread; negateresult: boolean);
+procedure scr_007F_forget_stored_cars_in_angled_cube(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   x1, y1, z1, x2, y2, z2, a: cfloat;
   i, j: integer;
@@ -2562,14 +2566,14 @@ begin
 end;
 
 {Get (once only), if the current thread has been recently saved}
-procedure scr_0080_has_game_been_saved(thread: TMissionThread; negateresult: boolean);
+procedure scr_0080_has_game_been_saved(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 begin
    thread.AddConditionalResult(thread.isSaveSuccessful, negateresult);
    thread.isSaveSuccessful := false;
 end;
 
 {Perform a Wasted-Busted return, if possible}
-procedure scr_0081_perform_wasted_busted_return(thread: TMissionThread; negateresult: boolean);
+procedure scr_0081_perform_wasted_busted_return(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 begin
    if thread.wbGosubActive then
      begin
@@ -2581,7 +2585,7 @@ begin
 end;
 
 {Create a forbidden for scenarios cube}
-procedure scr_0082_create_forbidden_for_scenarios_cube(thread: TMissionThread; negateresult: boolean);
+procedure scr_0082_create_forbidden_for_scenarios_cube(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   vloc: TVariableLocation;
   vid: word;
@@ -2622,7 +2626,7 @@ begin
 end;
 
 {Swaps map models in an area}
-procedure scr_0083_swap_map_models_in_area(thread: TMissionThread; negateresult: boolean);
+procedure scr_0083_swap_map_models_in_area(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   x, y, z, radius: cfloat;
   oldHash, newHash: Hash;
@@ -2667,7 +2671,7 @@ begin
 end;
 
 {Restores swapped map models in an area}
-procedure scr_0084_restore_map_models_in_area(thread: TMissionThread; negateresult: boolean);
+procedure scr_0084_restore_map_models_in_area(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   x, y, z, radius: cfloat;
   oldHash, currHash: Hash;
@@ -2702,7 +2706,7 @@ begin
 end;
 
 {Disables map models in an area}
-procedure scr_0085_disable_map_models_in_area(thread: TMissionThread; negateresult: boolean);
+procedure scr_0085_disable_map_models_in_area(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   x, y, z, radius: cfloat;
   modelHash: Hash;
@@ -2739,7 +2743,7 @@ begin
 end;
 
 {Reenables map models in an area}
-procedure scr_0086_reenable_map_models_in_area(thread: TMissionThread; negateresult: boolean);
+procedure scr_0086_reenable_map_models_in_area(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   x, y, z, radius: cfloat;
   modelHash: Hash;
@@ -2767,7 +2771,7 @@ begin
 end;
 
 {Stores a single vehicle in the specified slot}
-procedure scr_0087_store_single_vehicle(thread: TMissionThread; negateresult: boolean);
+procedure scr_0087_store_single_vehicle(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   veh: Vehicle;
   slot: cint;
@@ -2785,7 +2789,7 @@ begin
 end;
 
 {Restores a single vehicle in the specified slot}
-procedure scr_0088_spawn_single_vehicle(thread: TMissionThread; negateresult: boolean);
+procedure scr_0088_spawn_single_vehicle(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   vloc: TVariableLocation;
   vid: word;
@@ -2821,7 +2825,7 @@ begin
 end;
 
 {Forgets a single vehicle in the specified slot}
-procedure scr_0089_forget_single_vehicle(thread: TMissionThread; negateresult: boolean);
+procedure scr_0089_forget_single_vehicle(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   slot: cint;
 begin
@@ -2833,7 +2837,7 @@ begin
 end;
 
 {Returns, if the specified slot has a single vehicle stored in}
-procedure scr_008A_is_single_vehicle_stored(thread: TMissionThread; negateresult: boolean);
+procedure scr_008A_is_single_vehicle_stored(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   slot: cint;
 begin
@@ -2848,7 +2852,7 @@ end;
 
 
 {Changes the specified ped's outfit (with a valid player model)}
-procedure scr_008B_dress_up_ped_as_protagonist(thread: TMissionThread; negateresult: boolean);
+procedure scr_008B_dress_up_ped_as_protagonist(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   actor: Ped;
   index, i, j: integer;
@@ -2862,15 +2866,14 @@ begin
      begin
       data := @thread.script.storedPlayerData[index].Data;
       for i := 0 to 11 do
-          if (i <> 7) then // Drawable 7 is unused!
-            SET_PED_COMPONENT_VARIATION(actor, cint(i), data^.OutfitData.Drawables[i].DrawableVar, data^.OutfitData.Drawables[i].TextureVar, data^.OutfitData.Drawables[i].PaletteVar);
+          SET_PED_COMPONENT_VARIATION(actor, cint(i), data^.OutfitData.Drawables[i].DrawableVar, data^.OutfitData.Drawables[i].TextureVar, data^.OutfitData.Drawables[i].PaletteVar);
       for i := 0 to 2 do
          SET_PED_PROP_INDEX(actor, cint(i), data^.OutfitData.Props[i].PropIndex, data^.OutfitData.Props[i].PropTexture, BOOL(0), 1);
      end;
 end;
 
 {Get GTA5 native result as conditional}
-procedure scr_008C_get_native_result_conditional(thread: TMissionThread; negateresult: boolean);
+procedure scr_008C_get_native_result_conditional(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
 var
   result: BOOL;
 begin
@@ -2880,9 +2883,34 @@ begin
    thread.AddConditionalResult(result <> BOOL(0), negateresult);
 end;
 
+{Get if player is wasted}
+procedure scr_008D_is_player_wasted(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
+begin
+   thread.AddConditionalResult(isPlayerDead, negateresult);
+end;
+
+{Get if player is busted}
+procedure scr_008E_is_player_busted(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
+begin
+   thread.AddConditionalResult(isPlayerBusted, negateresult);
+end;
+
+{Get GTA5 game version}
+procedure scr_008F_get_game_version(thread: TMissionThread; negateresult, isPlayerDead, isPlayerBusted: boolean);
+var
+  vloc: TVariableLocation;
+  vid: word;
+begin
+   {Param: 'result'}
+   thread.GetVarId(vloc, vid);
+   thread.ClearVariable(vloc, vid);
+   {Save result}
+   thread.SetVarInt(vloc, vid, ord(getGameVersion));
+end;
+
 {OpCode handler table}
 var
-  OpCodes: array [$0000..$008C] of TOpCodeHandler =
+  OpCodes: array [$0000..$008F] of TOpCodeHandler =
     (
      @scr_0000_nop,
      @scr_0001_wait,
@@ -3024,6 +3052,9 @@ var
      @scr_0089_forget_single_vehicle,
      @scr_008A_is_single_vehicle_stored,
      @scr_008B_dress_up_ped_as_protagonist,
-     @scr_008C_get_native_result_conditional
+     @scr_008C_get_native_result_conditional,
+     @scr_008D_is_player_wasted,
+     @scr_008E_is_player_busted,
+     @scr_008F_get_game_version
     );
 

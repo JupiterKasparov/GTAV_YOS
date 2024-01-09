@@ -33,9 +33,9 @@ begin
                        SHUTDOWN_LOADING_SCREEN;
 
                     // World cleanup
-                    KillStoryScripts;
-                    ClearWorldMap;
-                    ResetPlayerInfo;
+                    DO_SCREEN_FADE_OUT(0);
+                    DoWorldCleanup;
+                    DO_SCREEN_FADE_IN(0);
                     MissionScript.Reset;
                     if MissionScript.IsAvailable then
                        GameScreen.MenuMode := gmLoadGame
@@ -46,6 +46,7 @@ begin
                   begin
                     if (IS_PLAYER_DEAD(GET_PLAYER_INDEX) <> BOOL(0)) then
                        begin
+                         PAUSE_DEATH_ARREST_RESTART(BOOL(0));
                          SET_FADE_OUT_AFTER_DEATH(BOOL(1));
                          SET_FADE_IN_AFTER_DEATH_ARREST(BOOL(1));
                          if not isPlayerDead then
@@ -55,6 +56,7 @@ begin
                        end
                     else if (IS_PLAYER_BEING_ARRESTED(GET_PLAYER_INDEX, BOOL(0)) <> BOOL(0)) then
                        begin
+                         PAUSE_DEATH_ARREST_RESTART(BOOL(0));
                          SET_FADE_OUT_AFTER_ARREST(BOOL(1));
                          SET_FADE_IN_AFTER_DEATH_ARREST(BOOL(1));
                          if not isPlayerBusted then
@@ -98,7 +100,7 @@ begin
                                  end;
                             end;
                        end;
-                    if (IS_CONTROL_JUST_RELEASED(0, 244) <> BOOL(0)) and (not isPlayerDead) and (not isPlayerBusted) then
+                    if (IS_CONTROL_JUST_RELEASED(0, 244) <> BOOL(0)) and (IS_SCREEN_FADING_OUT = BOOL(0)) and(IS_SCREEN_FADED_OUT = BOOL(0)) and  (IS_CUTSCENE_PLAYING = BOOL(0)) and (IS_PLAYER_SWITCH_IN_PROGRESS = BOOL(0)) and (not isPlayerDead) and (not isPlayerBusted) then
                        begin
                          if MissionScript.IsAvailable then
                             GameScreen.MenuMode := gmLoadGame
@@ -106,11 +108,11 @@ begin
                             PushMapNotification('~o~Without a runnable mission script, the menu is disabled!');
                        end
                     else
-                       MissionScript.Run(isPlayerDead or isPlayerBusted);
+                       MissionScript.Run(GameScreen.MenuMode, isPlayerDead, isPlayerBusted);
                   end
                else
                   begin
-                    MissionScript.Run(false);
+                    MissionScript.Run(GameScreen.MenuMode, false, false);
                     if GameScreen.ProcessMenu(eventId, sgi, MissionScript.GetInternalPlayerIndex, MissionScript.IsGameStarted) then
                        begin
                          case eventId of
@@ -118,16 +120,18 @@ begin
                                 begin
                                   GameScreen.MenuMode := gmLoadingScreen;
                                   GameScreen.DrawLoadingScreen;
-                                  ClearWorldMap;
-                                  ResetPlayerInfo;
+                                  DO_SCREEN_FADE_OUT(0);
+                                  DoWorldCleanup;
+                                  DO_SCREEN_FADE_IN(0);
                                   MissionScript.Reset;
                                 end;
                               evtLoadGame:
                                 begin
                                   GameScreen.MenuMode := gmLoadingScreen;
                                   GameScreen.DrawLoadingScreen;
-                                  ClearWorldMap;
-                                  ResetPlayerInfo;
+                                  DO_SCREEN_FADE_OUT(0);
+                                  DoWorldCleanup;
+                                  DO_SCREEN_FADE_IN(0);
                                   MissionScript.Load(sgi);
                                 end;
                               evtSaveGame:

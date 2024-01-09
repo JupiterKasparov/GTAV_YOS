@@ -77,7 +77,6 @@ procedure TMissionThread.AllocateString(vloc: TVariableLocation; id: word; value
 var
   i: cint;
 begin
-  ClearVariable(vloc, id);
   for i := 0 to High(script.globalStrings) do
       if not script.globalStrings[i].Used then
          begin

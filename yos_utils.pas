@@ -5,12 +5,13 @@ unit YOS_Utils;
 interface
 
 uses
-  Windows, ctypes, Classes, SysUtils, Math;
+  Windows, ctypes, Classes, SysUtils;
 
 type
   TGTA5Array = packed array of UINT32;
 
 // Helpers
+function CurrentTimeMs: int64;
 procedure WriteCString(str: string; stream: TStream);
 function ReadCString(stream: TStream): string;
 function ReadRawData(filename: string): TStrings;
@@ -32,6 +33,18 @@ var
   YosFormatSettings: TFormatSettings;
 
 implementation
+
+var
+  pFreq: LARGE_INTEGER;
+  bHasLogFile: boolean;
+
+function CurrentTimeMs: int64;
+var
+  currentTime: LARGE_INTEGER;
+begin
+  QueryPerformanceCounter(@currentTime);
+  Result := System.trunc((1000 * currentTime.QuadPart) / pFreq.QuadPart);
+end;
 
 procedure WriteCString(str: string; stream: TStream);
 var
@@ -209,9 +222,6 @@ begin
   Result := arr[2 + (index * 2)];
 end;
 
-var
-  bHasLogFile: boolean = false;
-
 procedure Log(category, str: string);
 const
   logFileName: string = 'yos_debug.log';
@@ -235,6 +245,8 @@ begin
 end;
 
 initialization
+  QueryPerformanceFrequency(@pFreq);
+  bHasLogFile := false;
   YosFormatSettings := DefaultFormatSettings;
   YosFormatSettings.DecimalSeparator := '.';
   YosFormatSettings.ShortDateFormat := 'DD MMM YYYY';

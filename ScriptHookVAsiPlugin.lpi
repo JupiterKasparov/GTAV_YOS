@@ -20,7 +20,7 @@
     <VersionInfo>
       <UseVersionInfo Value="True"/>
       <MajorVersionNr Value="2"/>
-      <MinorVersionNr Value="2"/>
+      <MinorVersionNr Value="3"/>
       <StringTable CompanyName="Jupiter" FileDescription="Your Own Storyline - GTA 5" OriginalFilename="YourOwnStorylineV.asi" ProductVersion=""/>
     </VersionInfo>
     <BuildModes Count="1">

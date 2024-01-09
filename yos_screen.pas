@@ -48,7 +48,7 @@ implementation
 
 type
   TMenuItemType = (mitGameSlot, mitNewGame, mitNoNewGame, mitNoSave, mitTitle);
-  TMenuColorType = (clrEnabledSelBg, clrDisabledSelBg, clrEnabledFont, clrDisabledFont, clrTitle);
+  TMenuColorType = (clrBackground, clrEnabledSelBg, clrDisabledSelBg, clrEnabledFont, clrDisabledFont, clrTitle);
 
   TMenuItem = record
     ItemType: TMenuItemType;
@@ -101,6 +101,7 @@ const
   // These color records are used to set the menu items' colors in various situations. RGBA values are filled in by code, upon DLL initialization!
   MenuColors: array [TMenuColorType] of TMenuColor =
              (
+              (ColorId: 'Background'; R: 0; G: 0; B: 0; A: 0),
               (ColorId: 'EnabledSelectedBg'; R: 0; G: 0; B: 0; A: 0),
               (ColorId: 'DisabledSelectedBg'; R: 0; G: 0; B: 0; A: 0),
               (ColorId: 'EnabledFont'; R: 0; G: 0; B: 0; A: 0),
@@ -276,7 +277,7 @@ begin
        SetLength(CustTexIndex, Length(CustTexIndex) + 1);
        CustTexIndex[High(CustTexIndex)].ID := id;
        CustTexIndex[High(CustTexIndex)].Data := 0;
-  end;
+     end;
 
   // Register texture draw, if necessary
   success := false;
@@ -433,10 +434,10 @@ begin
   END_SCALEFORM_MOVIE_METHOD;
 
   BEGIN_SCALEFORM_MOVIE_METHOD(buttonsMovie, PChar('SET_BACKGROUND_COLOR'));
-  SCALEFORM_MOVIE_METHOD_ADD_PARAM_INT(cint(MenuColors[clrDisabledSelBg].R));
-  SCALEFORM_MOVIE_METHOD_ADD_PARAM_INT(cint(MenuColors[clrDisabledSelBg].G));
-  SCALEFORM_MOVIE_METHOD_ADD_PARAM_INT(cint(MenuColors[clrDisabledSelBg].R));
-  SCALEFORM_MOVIE_METHOD_ADD_PARAM_INT(cint(MenuColors[clrDisabledSelBg].A));
+  SCALEFORM_MOVIE_METHOD_ADD_PARAM_INT(cint(MenuColors[clrBackground].R));
+  SCALEFORM_MOVIE_METHOD_ADD_PARAM_INT(cint(MenuColors[clrBackground].G));
+  SCALEFORM_MOVIE_METHOD_ADD_PARAM_INT(cint(MenuColors[clrBackground].B));
+  SCALEFORM_MOVIE_METHOD_ADD_PARAM_INT(96);
   END_SCALEFORM_MOVIE_METHOD;
 end;
 
@@ -468,7 +469,7 @@ procedure TGameScreen.DrawLoadingScreen;
 begin
   if (currentMenu = gmLoadingScreen) then
      begin
-       DRAW_RECT(0.5, 0.5, 1.0, 1.0, cint(MenuColors[clrDisabledSelBg].R), cint(MenuColors[clrDisabledSelBg].G), cint(MenuColors[clrDisabledSelBg].B), 255, BOOL(0));
+       DRAW_RECT(0.5, 0.5, 1.0, 1.0, cint(MenuColors[clrBackground].R), cint(MenuColors[clrBackground].G), cint(MenuColors[clrBackground].B), 255, BOOL(0));
        SET_TEXT_FONT(1);
        SET_TEXT_SCALE(0.0, 1.5);
        SET_TEXT_CENTRE(BOOL(0));
@@ -480,7 +481,7 @@ begin
      end
   else
      begin
-       DRAW_RECT(0.5, 0.5, 0.5, 0.25, cint(MenuColors[clrDisabledSelBg].R), cint(MenuColors[clrDisabledSelBg].G), cint(MenuColors[clrDisabledSelBg].B), 192, BOOL(0));
+       DRAW_RECT(0.5, 0.5, 0.5, 0.25, cint(MenuColors[clrBackground].R), cint(MenuColors[clrBackground].G), cint(MenuColors[clrBackground].B), 192, BOOL(0));
        SET_TEXT_FONT(1);
        SET_TEXT_SCALE(0.0, 1.5);
        SET_TEXT_CENTRE(BOOL(1));
@@ -488,7 +489,7 @@ begin
        SET_TEXT_DROPSHADOW(4, 0, 0, 0, 255);
        BEGIN_TEXT_COMMAND_DISPLAY_TEXT(PChar('STRING'));
        ADD_TEXT_COMPONENT_SUBSTRING_PLAYER_NAME(PChar(GetGameTitle('Ld_MicroScr')));
-       END_TEXT_COMMAND_DISPLAY_TEXT(0.5, 0.5, 0);
+       END_TEXT_COMMAND_DISPLAY_TEXT(0.5, 0.5 - (GET_RENDERED_CHARACTER_HEIGHT(1.5, 1) / 2), 0);
      end;
 end;
 
@@ -692,7 +693,7 @@ begin
                  DRAW_RECT(0.5, 0.5, 1.0, 1.0, r, g, b, 128, BOOL(0));
                end
             else
-               DRAW_RECT(0.5, 0.5, 1.0, 1.0, 32, 32, 32, 255, BOOL(0));
+               DRAW_RECT(0.5, 0.5, 1.0, 1.0, cint(MenuColors[clrBackground].R), cint(MenuColors[clrBackground].G), cint(MenuColors[clrBackground].B), 255, BOOL(0));
 
             // Items
             for i := 0 to High(MenuItems) do

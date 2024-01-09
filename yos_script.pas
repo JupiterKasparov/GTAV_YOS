@@ -10,7 +10,7 @@ uses
 
 const
   SCRIPT_MAJOR_VERSION = 2;
-  SCRIPT_MINOR_VERSION = 2;
+  SCRIPT_MINOR_VERSION = 3;
 
 type
   // Forward declarations
@@ -157,6 +157,7 @@ type
     script: TMissionScript;
     lastRunTime, lastRunTimeDiff: INT64;
     nativeCallResult: PUINT64;
+    isSavedGame, isSaveSuccessful: boolean;
 
     // Persistent properties
     offset: UINT64;
@@ -173,7 +174,6 @@ type
     wbGosubActive: boolean;
     wbGosubLevel: byte;
     wbGosubReturn: INT64;
-    isSavedGame, isSaveSuccessful: boolean;
     // Internal functions
     function GetVarData(vloc: TVariableLocation; id: word): UINT32;
     procedure SetVarData(vloc: TVariableLocation; vtype: TVariableType; id: word; value: UINT32);
@@ -189,7 +189,7 @@ type
     function GetNextParameterInt: cint;
     function GetNextParameterFloat: cfloat;
     function GetNextParameterString: string;
-    procedure CallOpcodeHandler(opcode: word);
+    procedure CallOpcodeHandler(opcode: word; isPlayerDead, isPlayerBusted: boolean);
     procedure Initialize;
   public
     // Public functions
@@ -197,7 +197,7 @@ type
     constructor Create(owner: TMissionScript; stream: TStream; savMajorVer, savMinorVer: integer); // Used, when the thread data is loaded from a savegame file
     destructor Destroy; override;
     procedure Save(stream: TStream); // Used, when the thread data is saved into a savegame file
-    procedure Run(isPlayerDead: boolean);
+    procedure Run(gameMenuType: TMenuType; isPlayerDead, isPlayerBusted: boolean);
     property ThreadName: string read scriptName;
     property ThreadStatus: TMissionThreadStatus read status write status;
   end;
@@ -262,7 +262,7 @@ type
     procedure Load(slot: integer); // Used, when the script data is loaded from a savegame file
     procedure Save(slot: integer); // Used, when the script data is saved into a savegame file
     procedure Reset;
-    procedure Run(isPlayerDead: boolean);
+    procedure Run(gameMenuType: TMenuType; isPlayerDead, isPlayerBusted: boolean);
     function IsAvailable: boolean;
     function ThreadCount: integer; // Number of running threads
     function FindNearestRespawnLocation(out location: TRespawnLocation; findHospital: boolean): boolean;
@@ -277,9 +277,6 @@ type
     property IsGameStarted: boolean read isStarted;
   end;
 
-const
-  DefaultRespawnLocation: TRespawnLocation = (X: 4000.0; Y: -4000.0; Z: 0.0; A: 45.0);
-
 var
   MissionScript: TMissionScript;
 
@@ -287,16 +284,7 @@ implementation
 
 var
   _is_dll_init_final_: boolean; // This must be set to true during DLL init / final, to prevent object init/final from calling Natives, and causing a game crash!
-  pFreq: LARGE_INTEGER;
   WeaponModels, WeaponCompModels: TStrings;
-
-function CurrentTimeMs: int64;
-var
-  currentTime: LARGE_INTEGER;
-begin
-  QueryPerformanceCounter(@currentTime);
-  Result := System.trunc((1000 * currentTime.QuadPart) / pFreq.QuadPart);
-end;
 
 {$I opcode_bin_helpers.inc}
 {$I opcodes.inc}
@@ -306,12 +294,12 @@ end;
 // ################
 {%region /fold 'TMissionThread'}
 
-procedure TMissionThread.CallOpcodeHandler(opcode: word);
+procedure TMissionThread.CallOpcodeHandler(opcode: word; isPlayerDead, isPlayerBusted: boolean);
 begin
   if (opcode >= $8000) then
-    OpCodes[opcode - $8000](Self, true)
+    OpCodes[opcode - $8000](Self, true, isPlayerDead, isPlayerBusted)
   else
-    OpCodes[opcode](Self, false);
+    OpCodes[opcode](Self, false, isPlayerDead, isPlayerBusted);
 end;
 
 procedure TMissionThread.Initialize;
@@ -322,6 +310,8 @@ begin
   lastRunTime := 0;
   lastRunTimeDiff := 0;
   nativeCallResult := nil;
+  isSavedGame := false;
+  isSaveSuccessful := false;
   offset := 0;
   position := 0;
   status := tstRunning;
@@ -342,8 +332,6 @@ begin
   wbGosubActive := false;
   wbGosubLevel := 0;
   wbGosubReturn := 0;
-  isSavedGame := false;
-  isSaveSuccessful := false;
 end;
 
 constructor TMissionThread.Create(owner: TMissionScript; fileOffset: UINT64);
@@ -362,6 +350,7 @@ begin
   inherited Create;
   Initialize;
   script := owner;
+  isSavedGame := true;
   offset := stream.ReadQWord;
   position := INT64(stream.ReadQWord);
   status := TMissionThreadStatus(stream.ReadByte);
@@ -390,7 +379,6 @@ begin
       wbGosubLevel := stream.ReadByte;
       wbGosubReturn := INT64(stream.ReadQWord);
     end;
-  isSavedGame := true;
 end;
 
 destructor TMissionThread.Destroy;
@@ -447,16 +435,16 @@ begin
   isSaveSuccessful := true;
 end;
 
-procedure TMissionThread.Run(isPlayerDead: boolean);
+procedure TMissionThread.Run(gameMenuType: TMenuType; isPlayerDead, isPlayerBusted: boolean);
 var
   currentTime: INT64;
   i: integer;
 begin
-  if (GameScreen.MenuMode = gmInGame) then
+  if (gameMenuType = gmInGame) then
     while (status = tstRunning) or (status = tstWaiting) do
           begin
             // If the wasted-busted return is active, and the player is wasted or busted, perform a return from a wb gosub function
-            if wbGosubActive and (gosubLevel > wbGosubLevel) and isPlayerDead then
+            if wbGosubActive and (gosubLevel > wbGosubLevel) and (isPlayerDead or isPlayerBusted) then
               begin
                 wbGosubActive := false;
                 gosubLevel := wbGosubLevel;
@@ -498,7 +486,7 @@ begin
               begin
                 script.bytes.Position := offset + position;
                 inc(position, 2); {--->>> 2b opcode}
-                CallOpcodeHandler(script.bytes.ReadWord);
+                CallOpcodeHandler(script.bytes.ReadWord, isPlayerDead, isPlayerBusted);
                 for i := 0 to High(timers) do
                     timers[i] := timers[i] + ((CurrentTimeMs - lastRunTime) / 1000); // Increase Timers
                 lastRunTime := CurrentTimeMs;
@@ -884,18 +872,11 @@ begin
   // Model and outfit
   data.Model := GET_ENTITY_MODEL(actor);
   for i := 0 to 11 do
-      if (i <> 7) then // Drawable 7 is unused!
-        begin
-          data.OutfitData.Drawables[i].DrawableVar := GET_PED_DRAWABLE_VARIATION(actor, cint(i));
-          data.OutfitData.Drawables[i].TextureVar := GET_PED_TEXTURE_VARIATION(actor, cint(i));
-          data.OutfitData.Drawables[i].PaletteVar := GET_PED_PALETTE_VARIATION(actor, cint(i));
-        end
-      else
-        begin
-          data.OutfitData.Drawables[i].DrawableVar := 0;
-          data.OutfitData.Drawables[i].TextureVar := 0;
-          data.OutfitData.Drawables[i].PaletteVar := 0;
-        end;
+      begin
+        data.OutfitData.Drawables[i].DrawableVar := GET_PED_DRAWABLE_VARIATION(actor, cint(i));
+        data.OutfitData.Drawables[i].TextureVar := GET_PED_TEXTURE_VARIATION(actor, cint(i));
+        data.OutfitData.Drawables[i].PaletteVar := GET_PED_PALETTE_VARIATION(actor, cint(i));
+      end;
   for i := 0 to 2 do
       begin
         data.OutfitData.Props[i].PropIndex := GET_PED_PROP_INDEX(actor, cint(i), 1);
@@ -957,13 +938,13 @@ begin
             end;
       SET_PLAYER_MODEL(GET_PLAYER_INDEX, data.Model);
       actor := GET_PLAYER_PED(GET_PLAYER_INDEX); // Changing Player model invalidates the original Ped!
+      SET_MODEL_AS_NO_LONGER_NEEDED(data.Model);
     end;
   if (GET_ENTITY_MODEL(actor) = data.Model) then
     begin
       // Should only try to apply outfit, if the current Ped model is the same as the stored Ped model
       for i := 0 to 11 do
-          if (i <> 7) then // Drawable 7 is unused!
-            SET_PED_COMPONENT_VARIATION(actor, cint(i), data.OutfitData.Drawables[i].DrawableVar, data.OutfitData.Drawables[i].TextureVar, data.OutfitData.Drawables[i].PaletteVar);
+          SET_PED_COMPONENT_VARIATION(actor, cint(i), data.OutfitData.Drawables[i].DrawableVar, data.OutfitData.Drawables[i].TextureVar, data.OutfitData.Drawables[i].PaletteVar);
       for i := 0 to 2 do
           SET_PED_PROP_INDEX(actor, cint(i), data.OutfitData.Props[i].PropIndex, data.OutfitData.Props[i].PropTexture, BOOL(0), 1);
     end;
@@ -1138,9 +1119,20 @@ begin
   data.Livery := GET_VEHICLE_LIVERY(veh);
   GET_VEHICLE_NEON_COLOUR(veh, @data.NeonColor.R, @data.NeonColor.G, @data.NeonColor.B);
   data.WindowTint := GET_VEHICLE_WINDOW_TINT(veh);
-  GET_VEHICLE_EXTRA_COLOUR_5(veh, @data.InteriorColor);
-  GET_VEHICLE_EXTRA_COLOUR_6(veh, @data.DashboardColor);
-  data.XenonColor := GET_VEHICLE_XENON_LIGHT_COLOR_INDEX(veh);
+  if (getGameVersion >= VER_1_0_877_1_STEAM) then
+    begin
+      GET_VEHICLE_EXTRA_COLOUR_5(veh, @data.InteriorColor);
+      GET_VEHICLE_EXTRA_COLOUR_6(veh, @data.DashboardColor);
+    end
+  else
+    begin
+      data.InteriorColor := 0;
+      data.DashboardColor := 0;
+    end;
+  if (getGameVersion >= VER_1_0_1604_0_STEAM) and (data.Mods[22].ModIndex <> 0) then
+    data.XenonColor := GET_VEHICLE_XENON_LIGHT_COLOR_INDEX(veh)
+  else
+    data.XenonColor := -1;
 end;
 
 function TMissionScript.RestoreVehicle(data: TVehiclePersistenceData): Vehicle;
@@ -1202,9 +1194,13 @@ begin
   SET_VEHICLE_LIVERY(Result, data.VehicleData.Livery);
   SET_VEHICLE_NEON_COLOUR(Result, data.VehicleData.NeonColor.R, data.VehicleData.NeonColor.G, data.VehicleData.NeonColor.B);
   SET_VEHICLE_WINDOW_TINT(Result, data.VehicleData.WindowTint);
-  SET_VEHICLE_EXTRA_COLOUR_5(Result, data.VehicleData.InteriorColor);
-  SET_VEHICLE_EXTRA_COLOUR_6(Result, data.VehicleData.DashboardColor);
-  SET_VEHICLE_XENON_LIGHT_COLOR_INDEX(Result, data.VehicleData.XenonColor);
+  if (getGameVersion >= VER_1_0_877_1_STEAM) then
+    begin
+      SET_VEHICLE_EXTRA_COLOUR_5(Result, data.VehicleData.InteriorColor);
+      SET_VEHICLE_EXTRA_COLOUR_6(Result, data.VehicleData.DashboardColor);
+    end;
+  if (getGameVersion >= VER_1_0_1604_0_STEAM) and (data.VehicleData.Mods[22].ModIndex <> 0) then
+    SET_VEHICLE_XENON_LIGHT_COLOR_INDEX(Result, data.VehicleData.XenonColor);
 
   // Unload model
   SET_MODEL_AS_NO_LONGER_NEEDED(data.VehicleData.Model);
@@ -2064,14 +2060,7 @@ begin
   enabledMaps.Clear;
   if not _is_dll_init_final_ then
     for i := 0 to disabledMaps.Count - 1 do
-        begin
-          while (IS_IPL_ACTIVE(PChar(disabledMaps[i])) = BOOL(0)) do
-                begin
-                  REQUEST_IPL(PChar(disabledMaps[i]));
-                  GameScreen.DrawLoadingScreen;
-                  ScriptHookVWait(0);
-                end;
-        end;
+        REQUEST_IPL(PChar(disabledMaps[i]));
   disabledMaps.Clear;
 
   if not _is_dll_init_final_ then
@@ -2117,13 +2106,13 @@ begin
     end;
 end;
 
-procedure TMissionScript.Run(isPlayerDead: boolean);
+procedure TMissionScript.Run(gameMenuType: TMenuType; isPlayerDead, isPlayerBusted: boolean);
 var
   i, j: integer;
 begin
   if IsAvailable then
     begin
-      if (GameScreen.MenuMode = gmInGame) then
+      if (gameMenuType = gmInGame) then
         begin
           // If not already started, we need to start the very first thread...
           if not isStarted then
@@ -2138,7 +2127,7 @@ begin
       // Run threads
       for i := 0 to High(threads) do
           if (threads[i].ThreadStatus <> tstFinished) then
-            threads[i].Run(isPlayerDead);
+            threads[i].Run(gameMenuType, isPlayerDead, isPlayerBusted);
 
       // Cleanup finished threads
       for i := High(threads) downto 0 do
@@ -2283,7 +2272,6 @@ end;
 initialization
   _is_dll_init_final_ := true;
 
-  QueryPerformanceFrequency(@pFreq);
   WeaponModels := ReadRawData('yos_data/data/WeaponsList.dat');
   WeaponCompModels := ReadRawData('yos_data/data/WeaponCompList.dat');
   MissionScript := TMissionScript.Create('yos_data/mission_script/main.yos');
