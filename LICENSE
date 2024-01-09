@@ -1,11 +1,11 @@
 License:
 
 This mod is open source. You have the opportunity to reuse code from this mod, but you should credit the author of the particular code you plan to use:
-* GTA5 Array functions (yos_utils.pas): originally based on https://gtaforums.com/topic/789788-function-args-to-pedget_ped_nearby_peds/
-* IsInAngledCube function (yos_utils.pas): originally generated with the help of iAsk.AI
-* KillStoryScripts function (yos_worldmanager.pas): originally based on code from GTAV Override by Konijima
-* DrawCustomTexture function (yos_screen.pas): originally based on https://github.com/scripthookvdotnet/scripthookvdotnet/blob/f0f86d6e3733b6e8af1fafc37aaf69c8fa9bd03c/source/scripting_v3/GTA.UI/CustomSprite.cs
-* TMissionScript.StoreVehicle and TMissionScript.RestoreVehicle functions (yos_script.pas): originally based on https://github.com/MAFINS/MenyooSP/blob/7c4bcf003dc5e63846f13eb9abbf0ef81259d99a/Solution/source/Scripting/GTAvehicle.cpp#L3818 
+* GTA5 Array functions (yos_utils.pas): based on https://gtaforums.com/topic/789788-function-args-to-pedget_ped_nearby_peds/
+* IsInAngledCube function (yos_utils.pas): generated with the help of iAsk.AI
+* DoWorldCleanup function (yos_worldmanager.pas): part of the 'Kill story' section is based on code from GTAV Override by Konijima
+* DrawCustomTexture function (yos_screen.pas): based on https://github.com/scripthookvdotnet/scripthookvdotnet/blob/f0f86d6e3733b6e8af1fafc37aaf69c8fa9bd03c/source/scripting_v3/GTA.UI/CustomSprite.cs
+* TMissionScript.StoreVehicle and TMissionScript.RestoreVehicle functions (yos_script.pas): based on https://github.com/MAFINS/MenyooSP/blob/7c4bcf003dc5e63846f13eb9abbf0ef81259d99a/Solution/source/Scripting/GTAvehicle.cpp#L3818 
 * All other code from this mod belongs directly to me!
 
 Forks and bug fixes:
