@@ -731,7 +731,7 @@ begin
               GameScreen.DrawLoadingScreen;
               ScriptHookVWait(0);
             end;
-      objectRecord._handle := CREATE_OBJECT(model, x, y, z, BOOL(0), BOOL(1), BOOL(0));
+      objectRecord._handle := CREATE_OBJECT_NO_OFFSET(model, x, y, z, BOOL(0), BOOL(1), BOOL(0));
       SET_ENTITY_ROTATION(objectRecord._handle, xa, ya, za, 1, BOOL(1));
       SET_MODEL_AS_NO_LONGER_NEEDED(model);
     end
@@ -921,7 +921,7 @@ var
   veh: Vehicle;
 begin
   // Basic data
-  SET_ENTITY_COORDS(actor, data.X, data.Y, data.Z, BOOL(0), BOOL(0), BOOL(0), BOOL(0));
+  SET_ENTITY_COORDS_NO_OFFSET(actor, data.X, data.Y, data.Z, BOOL(0), BOOL(0), BOOL(0));
   SET_ENTITY_HEADING(actor, data.A);
   SET_ENTITY_HEALTH(actor, data.Health, 0, 0);
   SET_PED_MAX_HEALTH(actor, data.MaxHealth);
@@ -972,7 +972,7 @@ begin
       CopyMemory(@vdata.VehicleData, @data.VehicleData, sizeof(TStoredVehicleData));
       veh := RestoreVehicle(vdata);
       SET_PED_INTO_VEHICLE(actor, veh, -1);
-      SET_ENTITY_COORDS(veh, data.X, data.Y, data.Z, BOOL(0), BOOL(0), BOOL(0), BOOL(1));
+      SET_ENTITY_COORDS_NO_OFFSET(veh, data.X, data.Y, data.Z, BOOL(0), BOOL(0), BOOL(0));
       SET_ENTITY_HEADING(veh, data.A);
       SET_VEHICLE_AS_NO_LONGER_NEEDED(@veh);
     end;

@@ -79,7 +79,7 @@ begin
                                  ResetPlayerLocation
                               else
                                  begin
-                                   SET_ENTITY_COORDS(GET_PLAYER_PED(GET_PLAYER_INDEX), respawnLocation.X, respawnLocation.Y, respawnLocation.Z, BOOL(0), BOOL(0), BOOL(0), BOOL(1));
+                                   SET_ENTITY_COORDS_NO_OFFSET(GET_PLAYER_PED(GET_PLAYER_INDEX), respawnLocation.X, respawnLocation.Y, respawnLocation.Z, BOOL(0), BOOL(0), BOOL(0));
                                    SET_ENTITY_HEADING(GET_PLAYER_PED(GET_PLAYER_INDEX), respawnLocation.A);
                                  end;
                             end;
@@ -95,7 +95,7 @@ begin
                                  ResetPlayerLocation
                               else
                                  begin
-                                   SET_ENTITY_COORDS(GET_PLAYER_PED(GET_PLAYER_INDEX), respawnLocation.X, respawnLocation.Y, respawnLocation.Z, BOOL(0), BOOL(0), BOOL(0), BOOL(1));
+                                   SET_ENTITY_COORDS_NO_OFFSET(GET_PLAYER_PED(GET_PLAYER_INDEX), respawnLocation.X, respawnLocation.Y, respawnLocation.Z, BOOL(0), BOOL(0), BOOL(0));
                                    SET_ENTITY_HEADING(GET_PLAYER_PED(GET_PLAYER_INDEX), respawnLocation.A);
                                  end;
                             end;

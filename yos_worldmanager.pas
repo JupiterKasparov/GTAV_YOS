@@ -291,7 +291,7 @@ begin
           GameScreen.DrawLoadingScreen;
           ScriptHookVWait(0);
         end;
-  SET_ENTITY_COORDS(GET_PLAYER_PED(plyr), 0.0, 0.0, 0.0, BOOL(0), BOOL(0), BOOL(0), BOOL(0));
+  SET_ENTITY_COORDS_NO_OFFSET(GET_PLAYER_PED(plyr), 0.0, 0.0, 0.0, BOOL(0), BOOL(0), BOOL(0));
   veh := CREATE_VEHICLE(h, 4000.0, -4000.0, 0.0, 45.0, BOOL(0), BOOL(0), BOOL(0));
   SET_PED_INTO_VEHICLE(GET_PLAYER_PED(plyr), veh, -1);
   SET_VEHICLE_AS_NO_LONGER_NEEDED(@veh);
